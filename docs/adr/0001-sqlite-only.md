@@ -1,6 +1,6 @@
 # SQLite is the only supported database
 
-Every Project runs as a single instance on a host with a local disk, so the Template supports SQLite alone: the database is a file on the container's volume and the whole Project is one container. PostgreSQL is not supported, tested against, or kept compatible; a Project that outgrows SQLite migrates on its own.
+Every Project runs as a single instance on a host with a local disk, so the Template supports SQLite alone: the database is a file on the container's volume and a Project runs as one container. PostgreSQL is not supported, tested against, or kept compatible; a Project that outgrows SQLite migrates on its own.
 
 ## Considered Options
 

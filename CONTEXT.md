@@ -1,6 +1,6 @@
 # spa-react-python
 
-A template repository from which React single-page apps backed by a Python API are created, so that each new one starts without novel boilerplate.
+A template repository for creating web applications with a React frontend and a Python backend, so that each new one starts without novel boilerplate.
 
 ## Language
 
