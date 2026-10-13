@@ -10,4 +10,4 @@ _Avoid_: Boilerplate, starter, scaffold
 
 **Project**:
 A repository created from the Template, which then evolves independently of it.
-_Avoid_: Generated repo, instance, app
+_Avoid_: Generated repo, instance
