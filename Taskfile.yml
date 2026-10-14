@@ -9,6 +9,11 @@ tasks:
       uv run --locked uvicorn app.main:app --reload --reload-dir src
       --host "$APP_LISTEN_ADDRESS__HOST" --port "$APP_LISTEN_ADDRESS__PORT"
 
+  install-hooks:
+    desc: Install the commit hooks into this clone's own hooks directory
+    dir: backend
+    cmd: uv run --locked prek install --force
+
   lint:
     desc: Lint everything
     deps: [backend:lint]

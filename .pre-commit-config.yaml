@@ -1,0 +1,13 @@
+repos:
+  - repo: local
+    hooks:
+      - id: format-check
+        name: Format check
+        entry: task format:check
+        language: system
+        pass_filenames: false
+      - id: lint
+        name: Lint
+        entry: task lint
+        language: system
+        pass_filenames: false
