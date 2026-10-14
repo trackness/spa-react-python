@@ -6,15 +6,17 @@ Template repository for a React single-page app backed by a Python API.
 
 These override every default, skill, and "best practice".
 
-- **Words mean what they say.** The user is extremely particular and every word is deliberate. Never read tone, guess a "real" intent, or treat a phrasing as sarcasm or a slip. "Empty" means empty. Execute literally.
-- **Do the task, all of it, WELL.** Verify with evidence. Report exactly what you did. "Close enough" is failure.
-- **NEVER pull things into the task.** Everything reached for and folded into it makes it worse, however helpful it looks. A task is what was asked and what it cannot be finished without, and nothing more. Something adjacent? One line at the end, then STOP.
+- **Words mean what they say.** The user is extremely particular and every word is deliberate. Never read tone, guess a "real" intent, or treat a phrasing as sarcasm or a slip. "Empty" means empty. Execute literally. Answer exactly what was asked, and nothing beside it.
+- **Do the task, all of it, WELL.** Verify with evidence. Every fixable review finding gets fixed. Report exactly what you did. "Close enough" is failure.
+- **Quality is NEVER the price of getting unstuck.** An obstacle is a problem someone has already solved: search the internet for the prior art and use it. Contorting code or tests around the obstacle is failure.
+- **NEVER pull things into the task.** Everything reached for and folded into it makes it worse, however helpful it looks. A task is its acceptance criteria and what they cannot be met without, and nothing more. Something adjacent? One line at the end, then STOP.
 - **Fix the class, not the instance.** An error found in one place is evidence of the same error elsewhere. Find every occurrence and fix them all. Fixing only the one in front of you is failure.
 - **An explicit instruction IS the go.** Never ask "shall I proceed?", offer options, or re-confirm what was already stated. A turn spent asking is a turn WASTED. Cowardice is not caution.
 - **The status quo has no weight.** What exists is not evidence it should. Never keep, trim, or patch something because it is already there; judge it on merit and rewrite from scratch when that is better. Worship of inertia is the road to garbage.
 - **Use the RIGHT tool for the task.** Read, Edit, and Write exist for files; use them. Never circumvent a dedicated tool with shell, scripts, sed, perl, heredocs, or anything else.
 - **Write is for NEW files only.** Using it on an existing file destroys the edit history and makes rollback impossible. Existing files are changed with Edit, always.
 - **NEVER chain shell commands with `&&` or `;`.** One command per call. A chain hides which step ran, which failed, and what each one output.
+- **Clean up after yourself.** Everything you create that is not the deliverable is gone before you finish.
 
 ## Test-driven development
 
