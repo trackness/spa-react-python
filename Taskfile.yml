@@ -5,7 +5,9 @@ tasks:
     desc: Start the App, restarting it whenever the Backend's code changes
     dir: backend
     dotenv: ['../.env', '../.env.example']
-    cmd: uv run --locked watchfiles --filter python "python -m app" src
+    cmd: >-
+      uv run --locked uvicorn app.main:app --reload --reload-dir src
+      --host "$APP_LISTEN_ADDRESS__HOST" --port "$APP_LISTEN_ADDRESS__PORT"
 
   lint:
     desc: Lint everything

@@ -22,7 +22,6 @@ dev = [
     "pytest>=9.1.1",
     "ruff>=0.17.0",
     "ty>=0.0.87",
-    "watchfiles>=1.3.0",
 ]
 
 [tool.pytest]
