@@ -19,6 +19,7 @@ module-name = "app"
 [dependency-groups]
 dev = [
     "httpx2>=2.13.1",
+    "prek>=0.5.5",
     "pytest>=9.1.1",
     "ruff>=0.17.0",
     "ty>=0.0.87",
