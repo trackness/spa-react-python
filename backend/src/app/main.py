@@ -1,18 +1,25 @@
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
+from http import HTTPStatus
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request, Response
+from sqlalchemy import Engine, text
+from sqlalchemy.exc import DBAPIError
 
+from app.database import database_engine, migrate
 from app.settings import Settings
 from app.telemetry import tracer_provider
 
-UNTRACED_PATHS = frozenset({"/health/live"})
+UNTRACED_PATHS = frozenset({"/health/live", "/health/ready"})
 
 
 @asynccontextmanager
-async def lifespan(_: FastAPI) -> AsyncGenerator[None]:
-    Settings()  # validates the start-up Settings, however the App is started
-    yield
+async def lifespan(_: FastAPI) -> AsyncGenerator[dict[str, Engine]]:
+    settings = Settings()  # validates the start-up Settings, however the App is started
+    migrate()
+    engine = database_engine(settings.database_file)
+    yield {"engine": engine}
+    engine.dispose()
 
 
 app = FastAPI(
@@ -27,4 +34,15 @@ app = FastAPI(
 
 @app.get("/health/live")
 def liveness() -> dict[str, str]:
+    return {"status": "ok"}
+
+
+@app.get("/health/ready")
+def readiness(request: Request, response: Response) -> dict[str, str]:
+    try:
+        with request.state.engine.connect() as connection:
+            connection.execute(text("SELECT 1"))
+    except DBAPIError:
+        response.status_code = HTTPStatus.SERVICE_UNAVAILABLE
+        return {"status": "unavailable"}
     return {"status": "ok"}

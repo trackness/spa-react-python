@@ -1,5 +1,4 @@
 import tomllib
-from pathlib import Path
 
 from opentelemetry.instrumentation.logging import LoggingInstrumentor
 from opentelemetry.sdk.resources import SERVICE_NAME, SERVICE_VERSION, Resource
@@ -8,7 +7,7 @@ from opentelemetry.sdk.trace.sampling import ALWAYS_ON
 from pythonjsonlogger.core import RESERVED_ATTRS
 from pythonjsonlogger.json import JsonFormatter
 
-BACKEND = Path(__file__).parents[2]
+from app import BACKEND
 
 resource = Resource.create(
     {

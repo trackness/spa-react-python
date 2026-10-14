@@ -4,14 +4,14 @@ import time
 import tomllib
 from collections.abc import Generator
 from contextlib import contextmanager
-from pathlib import Path
 from typing import Any
 
 import httpx2
 import pytest
 import uvicorn
 
-BACKEND = Path(__file__).parents[1]
+from app import BACKEND
+
 TRACE_ID = "4bf92f3577b34da6a3ce929d0e0e4736"
 PARENT_SPAN_ID = "00f067aa0ba902b7"
 UNTRACED = "0"
@@ -73,8 +73,9 @@ def test_spans_are_recorded_even_when_the_caller_does_not_sample(
     assert line["trace_sampled"] is True
 
 
-def test_liveness_is_not_traced(capfd: pytest.CaptureFixture[str]) -> None:
-    line = access_line(capfd, "/health/live", f"00-{TRACE_ID}-{PARENT_SPAN_ID}-01")
+@pytest.mark.parametrize("path", ["/health/live", "/health/ready"])
+def test_health_is_not_traced(capfd: pytest.CaptureFixture[str], path: str) -> None:
+    line = access_line(capfd, path, f"00-{TRACE_ID}-{PARENT_SPAN_ID}-01")
 
     assert line["trace_id"] == UNTRACED
 

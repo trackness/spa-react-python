@@ -3,12 +3,14 @@ name = "spa-react-python"
 dynamic = ["version"]
 requires-python = ">=3.14"
 dependencies = [
+    "alembic>=1.20.0",
     "fastapi[standard-no-fastapi-cloud-cli]>=0.143.1",
     "opentelemetry-instrumentation-logging>=0.66b1",
     "opentelemetry-sdk>=1.45.1",
     "pydantic>=2.14.1",
     "pydantic-settings>=2.16.0",
     "python-json-logger>=4.2.0",
+    "sqlalchemy>=2.1.4",
     "uvicorn>=0.54.0",
 ]
 
@@ -50,9 +52,29 @@ ignore = [
     "INP001", # pytest collects tests without packages
     "S101",   # tests assert
 ]
+"migrations/**" = [
+    "INP001", # Alembic loads migrations without packages
+]
 
 [tool.ruff.lint.flake8-tidy-imports.banned-api]
 "__future__.annotations".msg = "banned by docs/standards.md"
 
 [tool.ty.rules]
 all = "error"
+
+[tool.alembic]
+script_location = "%(here)s/migrations"
+
+# a new migration passes the lint and format checks as generated
+[[tool.alembic.post_write_hooks]]
+name = "ruff_check"
+type = "module"
+module = "ruff"
+options = "check --fix REVISION_SCRIPT_FILENAME"
+
+[[tool.alembic.post_write_hooks]]
+name = "ruff_format"
+type = "module"
+module = "ruff"
+options = "format REVISION_SCRIPT_FILENAME"
+
