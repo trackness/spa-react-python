@@ -1,8 +1,36 @@
 # Claude Code local-only settings
 .claude/settings.local.json
 
-# OS
+# macOS (github/gitignore Global/macOS.gitignore)
 .DS_Store
+.localized
+__MACOSX/
+.AppleDouble
+.LSOverride
+Icon[[:cntrl:]]
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+.com.apple.timemachine.supported
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+*.icloud
+
+# Linux (github/gitignore Global/Linux.gitignore)
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
+nohup.out
 
 # JetBrains IDEs
 .idea/
@@ -10,27 +38,39 @@
 # Python
 __pycache__/
 *.py[cod]
+*$py.class
 .venv/
+.pytest_cache/
+.ruff_cache/
 
 # Frontend
 node_modules/
 dist/
 *.local
+*.tsbuildinfo
 
 # Logs
 *.log
+.pnpm-debug.log*
+report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 
 # Task checksums
 .task/
 
+# Kubb debug reports
+.kubb/
+
 # Local environment and database
 .env
 *.db
+*.db-journal
 *.db-shm
 *.db-wal
 *.sqlite
+*.sqlite-journal
 *.sqlite-shm
 *.sqlite-wal
 *.sqlite3
+*.sqlite3-journal
 *.sqlite3-shm
 *.sqlite3-wal
