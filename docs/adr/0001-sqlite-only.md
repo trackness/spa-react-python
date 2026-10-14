@@ -12,4 +12,4 @@ Every Project runs as a single instance on a host with a local disk, so the Temp
 - One writer at a time, and the database file must not live on a network filesystem.
 - A Project cannot run more than one instance.
 - Most schema changes rebuild the table, so every constraint must be named.
-- Copying the database file alone while the app is running can lose committed data.
+- Copying the database file alone while the App is running can lose committed data.

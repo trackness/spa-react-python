@@ -16,6 +16,14 @@ These override every default, skill, and "best practice".
 - **Write is for NEW files only.** Using it on an existing file destroys the edit history and makes rollback impossible. Existing files are changed with Edit, always.
 - **NEVER chain shell commands with `&&` or `;`.** One command per call. A chain hides which step ran, which failed, and what each one output.
 
+## Test-driven development
+
+No production code without a failing test first.
+
+## Standards
+
+Before writing or changing anything, read [`docs/standards.md`](docs/standards.md): every change follows it.
+
 ## Git conventions
 
 All work lands via a branch and pull request. `main` only ever receives squash-merges; every change, however small, starts on a branch.
@@ -26,6 +34,7 @@ Follow [Conventional Branch](https://conventionalbranch.org/): `<type>/<descript
 
 - Types: `feat`, `fix`, `hotfix`, `release`, `chore`. Match the type to the Conventional Commit type of the work.
 - Lowercase letters, digits and hyphens only. Dots are allowed only for version numbers (`release/v1.2.0`). No underscores, spaces, consecutive separators, or leading/trailing separators.
+- Exception: release-please's branch, `release-please--branches--main`, is exempt from these naming rules, because its name cannot be configured.
 - Put the issue number in the description when one applies: `feat/issue-123-add-login-page`.
 - Do not use agent-source prefixes (`ai/`, `claude/`, etc.); branches are named by purpose only.
 - Never commit directly to `main`.
@@ -44,6 +53,14 @@ Follow [Conventional Commits 1.0.0](https://www.conventionalcommits.org/en/v1.0.
 - Open a pull request against `main`. The pull request title must itself be a valid Conventional Commit subject and the body must be in the same shape, because GitHub uses them verbatim as the squash commit's message.
 - Branches are **squash-merged** only. Merge commits and rebase merges are disabled in the repository settings.
 - The branch is deleted on merge (enforced by the repository settings). Delete the local branch too.
+
+### Pull request body
+
+The pull request body becomes the squash commit body, which release-please parses:
+
+- A paragraph that starts with a commit type becomes an extra changelog entry and counts toward the version.
+- A line with nested parentheses after its first word drops the whole commit silently.
+- A subject that is not a valid Conventional Commit is dropped silently.
 
 ## Agent skills
 

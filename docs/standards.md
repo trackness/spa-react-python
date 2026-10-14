@@ -1,0 +1,32 @@
+# Standards
+
+The standards every change in this repository follows.
+
+## Dependencies
+
+Never hand-roll anything a strong implementation already does. Good dependencies are not to be avoided.
+
+## Toolchain
+
+- **ty** type checks Python.
+- **ruff** lints and formats Python.
+- **Biome** lints and formats the Frontend.
+
+## Python
+
+- `from __future__ import annotations` is banned.
+- **Pydantic v2** and **pydantic-settings** are the preferred tools.
+
+## API errors and forms
+
+- Every API error reaches the Frontend as a thrown, typed error carrying the HTTP status and the response body.
+- Every form shows the Backend's validation errors against the fields they belong to.
+
+## Taskfile
+
+- Every change that introduces a local action delivers its Taskfile task in the same change.
+- CI and prek call tasks, never the underlying commands.
+
+## Telemetry off
+
+Nothing used may report usage or errors about the repository's owner. Version lookups and downloads are acceptable.
