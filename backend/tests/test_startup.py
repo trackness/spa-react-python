@@ -12,6 +12,8 @@ import pytest
 
 STARTUP_TIMEOUT_SECONDS = 15
 STARTUP_ATTEMPTS = 3
+# Not uvicorn's own default host, 127.0.0.1, so an ignored host cannot pass.
+HOST = "::1"
 
 
 class AppExitedBeforeServingError(Exception):
@@ -25,16 +27,12 @@ def app_environment(**settings: str) -> dict[str, str]:
     return inherited | settings
 
 
-def socket_for(host: str) -> socket.socket:
-    return socket.socket(socket.AF_INET6 if ":" in host else socket.AF_INET)
-
-
-def free_port(host: str) -> int:
-    with socket_for(host) as probe:
+def free_port() -> int:
+    with socket.socket(socket.AF_INET6) as probe:
         try:
-            probe.bind((host, 0))
+            probe.bind((HOST, 0))
         except OSError:
-            pytest.skip(f"{host} is unavailable")
+            pytest.skip(f"{HOST} is unavailable")
         port = probe.getsockname()[1]
         assert isinstance(port, int)
         return port
@@ -55,12 +53,14 @@ def liveness_once_serving(
     pytest.fail(f"the App did not serve {url} in time")
 
 
-def serve_liveness(host: str, port: int, settings: dict[str, str]) -> httpx2.Response:
-    url = httpx2.URL(scheme="http", host=host, port=port, path="/health/live")
+def serve_liveness(port: int) -> httpx2.Response:
+    url = httpx2.URL(scheme="http", host=HOST, port=port, path="/health/live")
     with tempfile.TemporaryFile("w+") as app_log:
         app_process = subprocess.Popen(
             [sys.executable, "-m", "app"],
-            env=app_environment(**settings),
+            env=app_environment(
+                APP_LISTEN_ADDRESS__HOST=HOST, APP_LISTEN_ADDRESS__PORT=str(port)
+            ),
             stderr=app_log,
             text=True,
         )
@@ -71,23 +71,20 @@ def serve_liveness(host: str, port: int, settings: dict[str, str]) -> httpx2.Res
             app_process.wait(timeout=STARTUP_TIMEOUT_SECONDS)
 
 
-def serve_liveness_on_a_free_port(host: str) -> httpx2.Response:
+def serve_liveness_on_a_free_port() -> httpx2.Response:
     # A port free when probed can be taken before the App binds it, so a start
     # that fails is retried on a fresh port.
+    app_log = ""
     for _ in range(STARTUP_ATTEMPTS):
-        port = free_port(host)
-        settings = {
-            "APP_LISTEN_ADDRESS__HOST": host,
-            "APP_LISTEN_ADDRESS__PORT": str(port),
-        }
         try:
-            return serve_liveness(host, port, settings)
+            return serve_liveness(free_port())
         except AppExitedBeforeServingError as exited:
             app_log = str(exited)
     pytest.fail(f"the App exited before serving:\n{app_log}")
 
 
 def test_the_app_serves_at_the_configured_listen_address() -> None:
-    response = serve_liveness_on_a_free_port("::1")
+    response = serve_liveness_on_a_free_port()
 
     assert response.status_code == HTTPStatus.OK
+    assert response.json() == {"status": "ok"}

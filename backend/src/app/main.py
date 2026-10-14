@@ -1,13 +1,11 @@
+from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
-from typing import TYPE_CHECKING, Literal
+from typing import Literal
 
 from fastapi import FastAPI
 from pydantic import BaseModel
 
 from app.settings import Settings
-
-if TYPE_CHECKING:
-    from collections.abc import AsyncGenerator
 
 
 class Liveness(BaseModel):
@@ -16,7 +14,7 @@ class Liveness(BaseModel):
 
 @asynccontextmanager
 async def lifespan(_: FastAPI) -> AsyncGenerator[None]:
-    Settings()
+    Settings()  # validates the start-up Settings, however the App is started
     yield
 
 

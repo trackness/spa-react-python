@@ -5,6 +5,12 @@ from pydantic import ValidationError
 from app.main import app
 
 
+def settings_rejected_at_startup() -> list[tuple[str | int, ...]]:
+    with pytest.raises(ValidationError) as rejected, TestClient(app):
+        pass
+    return [error["loc"] for error in rejected.value.errors()]
+
+
 @pytest.mark.parametrize(
     ("variable", "value", "setting"),
     [
@@ -18,10 +24,7 @@ def test_an_invalid_setting_stops_the_app(
 ) -> None:
     monkeypatch.setenv(variable, value)
 
-    with pytest.raises(ValidationError) as invalid, TestClient(app):
-        pass
-
-    assert [error["loc"] for error in invalid.value.errors()] == [setting]
+    assert settings_rejected_at_startup() == [setting]
 
 
 @pytest.mark.parametrize(
@@ -36,7 +39,4 @@ def test_a_missing_setting_stops_the_app(
 ) -> None:
     monkeypatch.delenv(variable)
 
-    with pytest.raises(ValidationError) as missing, TestClient(app):
-        pass
-
-    assert [error["loc"] for error in missing.value.errors()] == [setting]
+    assert settings_rejected_at_startup() == [setting]

@@ -4,9 +4,7 @@ tasks:
   run:
     desc: Start the App, restarting it whenever the Backend's code changes
     dir: backend
-    env:
-      APP_LISTEN_ADDRESS__HOST: 127.0.0.1
-      APP_LISTEN_ADDRESS__PORT: 8000
+    dotenv: ['../.env', '../.env.example']
     cmd: uv run --locked watchfiles --filter python "python -m app" src
 
   lint:
