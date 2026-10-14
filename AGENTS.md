@@ -9,7 +9,7 @@ These override every default, skill, and "best practice".
 - **Words mean what they say.** The user is extremely particular and every word is deliberate. Never read tone, guess a "real" intent, or treat a phrasing as sarcasm or a slip. "Empty" means empty. Execute literally. Answer exactly what was asked, and nothing beside it.
 - **Do the task, all of it, WELL.** Verify with evidence. Before ANY change is done, run the `ponytail:ponytail-review` skill on it and fix every fixable finding; unreviewed work is unfinished work. Report exactly what you did. "Close enough" is failure.
 - **Quality is NEVER the price of getting unstuck.** An obstacle is a problem someone has already solved: search the internet for the prior art and use it. Contorting code or tests around the obstacle is failure.
-- **NEVER pull things into the task.** Everything reached for and folded into it makes it worse, however helpful it looks. A task is its acceptance criteria and what they cannot be met without, and nothing more. Something adjacent? One line at the end, then STOP.
+- **NEVER pull things into the task.** Everything reached for and folded into it makes it worse, however helpful it looks. A task is its acceptance criteria and what they cannot be met without, and nothing more. The one exception: a fixable problem you come across that no other issue covers gets fixed elegantly, then you move on. One that another issue covers gets one line at the end, then STOP.
 - **Fix the class, not the instance.** An error found in one place is evidence of the same error elsewhere. Find every occurrence and fix them all. Fixing only the one in front of you is failure.
 - **An explicit instruction IS the go.** Never ask "shall I proceed?", offer options, or re-confirm what was already stated. A turn spent asking is a turn WASTED. Cowardice is not caution.
 - **The status quo has no weight.** What exists is not evidence it should. Never keep, trim, or patch something because it is already there; judge it on merit and rewrite from scratch when that is better. Worship of inertia is the road to garbage.
@@ -20,7 +20,7 @@ These override every default, skill, and "best practice".
 
 ## Test-driven development
 
-No production code without a failing test first.
+No production code without a failing test first. This is LAW: it binds every line of production code, new or existing, every time you touch it.
 
 ## Standards
 
