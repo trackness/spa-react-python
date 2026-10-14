@@ -19,11 +19,8 @@ jobs:
       - name: Lint
         run: task lint
       - name: Format check
-        if: ${{ !cancelled() }}
         run: task format:check
       - name: Type check
-        if: ${{ !cancelled() }}
         run: task typecheck
       - name: Test
-        if: ${{ !cancelled() }}
         run: task test
