@@ -11,20 +11,8 @@ import httpx2
 import pytest
 
 STARTUP_TIMEOUT_SECONDS = 15
-STARTUP_ATTEMPTS = 3
 # Not uvicorn's own default host, 127.0.0.1, so an ignored host cannot pass.
 HOST = "::1"
-
-
-class AppExitedBeforeServingError(Exception):
-    pass
-
-
-def app_environment(**settings: str) -> dict[str, str]:
-    inherited = {
-        name: value for name, value in os.environ.items() if not name.startswith("APP_")
-    }
-    return inherited | settings
 
 
 def free_port() -> int:
@@ -45,7 +33,7 @@ def liveness_once_serving(
     while time.monotonic() < deadline:
         if app_process.poll() is not None:
             app_log.seek(0)
-            raise AppExitedBeforeServingError(app_log.read())
+            pytest.fail(f"the App exited before serving:\n{app_log.read()}")
         try:
             return httpx2.get(url)
         except httpx2.TransportError:
@@ -58,9 +46,8 @@ def serve_liveness(port: int) -> httpx2.Response:
     with tempfile.TemporaryFile("w+") as app_log:
         app_process = subprocess.Popen(
             [sys.executable, "-m", "app"],
-            env=app_environment(
-                APP_LISTEN_ADDRESS__HOST=HOST, APP_LISTEN_ADDRESS__PORT=str(port)
-            ),
+            env=os.environ
+            | {"APP_LISTEN_ADDRESS__HOST": HOST, "APP_LISTEN_ADDRESS__PORT": str(port)},
             stderr=app_log,
             text=True,
         )
@@ -71,20 +58,8 @@ def serve_liveness(port: int) -> httpx2.Response:
             app_process.wait(timeout=STARTUP_TIMEOUT_SECONDS)
 
 
-def serve_liveness_on_a_free_port() -> httpx2.Response:
-    # A port free when probed can be taken before the App binds it, so a start
-    # that fails is retried on a fresh port.
-    app_log = ""
-    for _ in range(STARTUP_ATTEMPTS):
-        try:
-            return serve_liveness(free_port())
-        except AppExitedBeforeServingError as exited:
-            app_log = str(exited)
-    pytest.fail(f"the App exited before serving:\n{app_log}")
-
-
 def test_the_app_serves_at_the_configured_listen_address() -> None:
-    response = serve_liveness_on_a_free_port()
+    response = serve_liveness(free_port())
 
     assert response.status_code == HTTPStatus.OK
     assert response.json() == {"status": "ok"}
