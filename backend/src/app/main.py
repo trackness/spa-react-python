@@ -1,11 +1,13 @@
-from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
 
 from fastapi import FastAPI
 from pydantic import BaseModel
 
 from app.settings import Settings
+
+if TYPE_CHECKING:
+    from collections.abc import AsyncGenerator
 
 
 class Liveness(BaseModel):

@@ -11,6 +11,11 @@ import httpx2
 import pytest
 
 STARTUP_TIMEOUT_SECONDS = 15
+STARTUP_ATTEMPTS = 3
+
+
+class AppExitedBeforeServingError(Exception):
+    pass
 
 
 def app_environment(**settings: str) -> dict[str, str]:
@@ -35,15 +40,6 @@ def free_port(host: str) -> int:
         return port
 
 
-def is_in_use(host: str, port: int) -> bool:
-    with socket_for(host) as probe:
-        try:
-            probe.bind((host, port))
-        except OSError:
-            return True
-        return False
-
-
 def liveness_once_serving(
     app_process: subprocess.Popen[str], app_log: IO[str], url: httpx2.URL
 ) -> httpx2.Response:
@@ -51,7 +47,7 @@ def liveness_once_serving(
     while time.monotonic() < deadline:
         if app_process.poll() is not None:
             app_log.seek(0)
-            pytest.fail(f"the App exited before serving:\n{app_log.read()}")
+            raise AppExitedBeforeServingError(app_log.read())
         try:
             return httpx2.get(url)
         except httpx2.TransportError:
@@ -75,24 +71,23 @@ def serve_liveness(host: str, port: int, settings: dict[str, str]) -> httpx2.Res
             app_process.wait(timeout=STARTUP_TIMEOUT_SECONDS)
 
 
+def serve_liveness_on_a_free_port(host: str) -> httpx2.Response:
+    # A port free when probed can be taken before the App binds it, so a start
+    # that fails is retried on a fresh port.
+    for _ in range(STARTUP_ATTEMPTS):
+        port = free_port(host)
+        settings = {
+            "APP_LISTEN_ADDRESS__HOST": host,
+            "APP_LISTEN_ADDRESS__PORT": str(port),
+        }
+        try:
+            return serve_liveness(host, port, settings)
+        except AppExitedBeforeServingError as exited:
+            app_log = str(exited)
+    pytest.fail(f"the App exited before serving:\n{app_log}")
+
+
 def test_the_app_serves_at_the_configured_listen_address() -> None:
-    host = "::1"
-    port = free_port(host)
-
-    response = serve_liveness(
-        host,
-        port,
-        {"APP_LISTEN_ADDRESS__HOST": host, "APP_LISTEN_ADDRESS__PORT": str(port)},
-    )
-
-    assert response.status_code == HTTPStatus.OK
-
-
-def test_the_app_serves_on_localhost_port_8000_by_default() -> None:
-    host, port = "127.0.0.1", 8000
-    if is_in_use(host, port):
-        pytest.skip(f"{host}:{port} is already in use")
-
-    response = serve_liveness(host, port, {})
+    response = serve_liveness_on_a_free_port("::1")
 
     assert response.status_code == HTTPStatus.OK

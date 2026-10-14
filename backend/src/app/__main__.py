@@ -3,7 +3,5 @@ import uvicorn
 from app.main import app
 from app.settings import Settings
 
-settings = Settings()
-uvicorn.run(
-    app, host=str(settings.listen_address.host), port=settings.listen_address.port
-)
+listen_address = Settings().listen_address
+uvicorn.run(app, host=str(listen_address.host), port=listen_address.port)
