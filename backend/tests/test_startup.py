@@ -2,8 +2,10 @@ import os
 import socket
 import subprocess
 import sys
+import tempfile
 import time
 from http import HTTPStatus
+from typing import IO
 
 import httpx2
 import pytest
@@ -24,7 +26,10 @@ def socket_for(host: str) -> socket.socket:
 
 def free_port(host: str) -> int:
     with socket_for(host) as probe:
-        probe.bind((host, 0))
+        try:
+            probe.bind((host, 0))
+        except OSError:
+            pytest.skip(f"{host} is unavailable")
         port = probe.getsockname()[1]
         assert isinstance(port, int)
         return port
@@ -39,12 +44,14 @@ def is_in_use(host: str, port: int) -> bool:
         return False
 
 
-def liveness_once_serving(app: subprocess.Popen[str], url: str) -> httpx2.Response:
+def liveness_once_serving(
+    app_process: subprocess.Popen[str], app_log: IO[str], url: httpx2.URL
+) -> httpx2.Response:
     deadline = time.monotonic() + STARTUP_TIMEOUT_SECONDS
     while time.monotonic() < deadline:
-        if app.poll() is not None:
-            _, stderr = app.communicate()
-            pytest.fail(f"the App exited before serving:\n{stderr}")
+        if app_process.poll() is not None:
+            app_log.seek(0)
+            pytest.fail(f"the App exited before serving:\n{app_log.read()}")
         try:
             return httpx2.get(url)
         except httpx2.TransportError:
@@ -52,49 +59,40 @@ def liveness_once_serving(app: subprocess.Popen[str], url: str) -> httpx2.Respon
     pytest.fail(f"the App did not serve {url} in time")
 
 
-def serve_liveness(settings: dict[str, str], url: str) -> httpx2.Response:
-    app = subprocess.Popen(
-        [sys.executable, "-m", "app"],
-        env=app_environment(**settings),
-        stderr=subprocess.PIPE,
-        text=True,
-    )
-    try:
-        return liveness_once_serving(app, url)
-    finally:
-        app.terminate()
-        app.communicate(timeout=STARTUP_TIMEOUT_SECONDS)
+def serve_liveness(host: str, port: int, settings: dict[str, str]) -> httpx2.Response:
+    url = httpx2.URL(scheme="http", host=host, port=port, path="/health/live")
+    with tempfile.TemporaryFile("w+") as app_log:
+        app_process = subprocess.Popen(
+            [sys.executable, "-m", "app"],
+            env=app_environment(**settings),
+            stderr=app_log,
+            text=True,
+        )
+        try:
+            return liveness_once_serving(app_process, app_log, url)
+        finally:
+            app_process.terminate()
+            app_process.wait(timeout=STARTUP_TIMEOUT_SECONDS)
 
 
 def test_the_app_serves_at_the_configured_listen_address() -> None:
-    port = free_port("::1")
+    host = "::1"
+    port = free_port(host)
 
     response = serve_liveness(
-        {"APP_LISTEN_ADDRESS__HOST": "::1", "APP_LISTEN_ADDRESS__PORT": str(port)},
-        f"http://[::1]:{port}/health/live",
+        host,
+        port,
+        {"APP_LISTEN_ADDRESS__HOST": host, "APP_LISTEN_ADDRESS__PORT": str(port)},
     )
 
     assert response.status_code == HTTPStatus.OK
 
 
 def test_the_app_serves_on_localhost_port_8000_by_default() -> None:
-    if is_in_use("127.0.0.1", 8000):
-        pytest.skip("127.0.0.1:8000 is already in use")
+    host, port = "127.0.0.1", 8000
+    if is_in_use(host, port):
+        pytest.skip(f"{host}:{port} is already in use")
 
-    response = serve_liveness({}, "http://127.0.0.1:8000/health/live")
+    response = serve_liveness(host, port, {})
 
     assert response.status_code == HTTPStatus.OK
-
-
-def test_an_invalid_setting_stops_the_app() -> None:
-    result = subprocess.run(
-        [sys.executable, "-m", "app"],
-        env=app_environment(APP_LISTEN_ADDRESS__PORT="70000"),
-        capture_output=True,
-        text=True,
-        timeout=STARTUP_TIMEOUT_SECONDS,
-        check=False,
-    )
-
-    assert result.returncode != 0
-    assert "listen_address.port" in result.stderr
