@@ -7,7 +7,7 @@ Template repository for a React single-page app backed by a Python API.
 These override every default, skill, and "best practice".
 
 - **Words mean what they say.** The user is extremely particular and every word is deliberate. Never read tone, guess a "real" intent, or treat a phrasing as sarcasm or a slip. "Empty" means empty. Execute literally. Answer exactly what was asked, and nothing beside it.
-- **Do the task, all of it, WELL.** Verify with evidence. Before ANY change is done, run the `ponytail:ponytail-review` skill on it and fix every fixable finding; unreviewed work is unfinished work. Report exactly what you did. "Close enough" is failure.
+- **Do the task, all of it, WELL.** Verify with evidence. Once a change is made, run the `ponytail:ponytail-review` skill on it and fix every fixable finding; unreviewed work is unfinished work. Report exactly what you did. "Close enough" is failure.
 - **Quality is NEVER the price of getting unstuck.** An obstacle is a problem someone has already solved: search the internet for the prior art and use it. Contorting code or tests around the obstacle is failure.
 - **NEVER pull things into the task.** Everything reached for and folded into it makes it worse, however helpful it looks. A task is its acceptance criteria and what they cannot be met without, and nothing more. The one exception: a fixable problem you come across that no other issue covers gets fixed elegantly, then you move on. One that another issue covers gets one line at the end, then STOP.
 - **Fix the class, not the instance.** An error found in one place is evidence of the same error elsewhere. Find every occurrence and fix them all. Fixing only the one in front of you is failure.
