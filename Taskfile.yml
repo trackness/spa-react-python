@@ -1,0 +1,55 @@
+version: '3'
+
+tasks:
+  run:
+    desc: Start the App, restarting it whenever the Backend's code changes
+    dir: backend
+    dotenv: ['../.env', '../.env.example']
+    cmd: >-
+      uv run --locked uvicorn app.main:app --reload --reload-dir src
+      --host "$APP_LISTEN_ADDRESS__HOST" --port "$APP_LISTEN_ADDRESS__PORT"
+
+  lint:
+    desc: Lint everything
+    deps: [backend:lint]
+
+  format:
+    desc: Format everything
+    deps: [backend:format]
+
+  format:check:
+    desc: Check that everything is formatted
+    deps: [backend:format:check]
+
+  typecheck:
+    desc: Type check everything
+    deps: [backend:typecheck]
+
+  test:
+    desc: Run every test
+    deps: [backend:test]
+
+  backend:lint:
+    desc: Lint the Backend
+    dir: backend
+    cmd: uv run --locked ruff check
+
+  backend:format:
+    desc: Format the Backend
+    dir: backend
+    cmd: uv run --locked ruff format
+
+  backend:format:check:
+    desc: Check that the Backend is formatted
+    dir: backend
+    cmd: uv run --locked ruff format --check
+
+  backend:typecheck:
+    desc: Type check the Backend
+    dir: backend
+    cmd: uv run --locked ty check
+
+  backend:test:
+    desc: Run the Backend's tests
+    dir: backend
+    cmd: uv run --locked pytest

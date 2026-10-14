@@ -1,0 +1,49 @@
+[project]
+name = "backend"
+version = "0.1.0"
+requires-python = ">=3.14"
+dependencies = [
+    "fastapi[standard-no-fastapi-cloud-cli]>=0.143.1",
+    "pydantic>=2.14.1",
+    "pydantic-settings>=2.16.0",
+    "uvicorn>=0.54.0",
+]
+
+[build-system]
+requires = ["uv_build>=0.13.1,<0.14.0"]
+build-backend = "uv_build"
+
+[tool.uv.build-backend]
+module-name = "app"
+
+[dependency-groups]
+dev = [
+    "httpx2>=2.13.1",
+    "pytest>=9.1.1",
+    "ruff>=0.17.0",
+    "ty>=0.0.87",
+]
+
+[tool.pytest]
+testpaths = ["tests"]
+
+[tool.ruff.lint]
+select = ["ALL"]
+ignore = [
+    "COM812", # conflicts with the formatter
+    "CPY",    # files carry no copyright header
+    "D",      # docstrings are not required
+    "TC",     # Pydantic and FastAPI resolve annotations at runtime
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = [
+    "INP001", # pytest collects tests without packages
+    "S101",   # tests assert
+]
+
+[tool.ruff.lint.flake8-tidy-imports.banned-api]
+"__future__.annotations".msg = "banned by docs/standards.md"
+
+[tool.ty.rules]
+all = "error"

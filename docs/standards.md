@@ -4,7 +4,7 @@ The standards every change in this repository follows.
 
 ## Dependencies
 
-Never hand-roll anything a strong implementation already does. Good dependencies are not to be avoided.
+Never hand-roll anything a strong implementation already does. Good dependencies are not to be avoided. Follow a framework's standard tooling and patterns unless there is a need to deviate.
 
 ## Toolchain
 
