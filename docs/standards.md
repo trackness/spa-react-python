@@ -4,7 +4,7 @@ The standards every change in this repository follows.
 
 ## Dependencies
 
-Reach for a strong existing implementation before writing code of your own: anything a well-maintained library already does is used, never hand-rolled. A good dependency is preferred to bespoke code.
+Never hand-roll anything a strong implementation already does. Good dependencies are not to be avoided.
 
 ## Toolchain
 
@@ -15,7 +15,7 @@ Reach for a strong existing implementation before writing code of your own: anyt
 ## Python
 
 - `from __future__ import annotations` is banned.
-- **Pydantic v2** is the preferred tool for data models and validation, and **pydantic-settings** for Settings.
+- **Pydantic v2** and **pydantic-settings** are the preferred tools.
 
 ## API errors and forms
 
@@ -29,5 +29,4 @@ Reach for a strong existing implementation before writing code of your own: anyt
 
 ## Telemetry off
 
-- Nothing used may report usage or errors about the repository's owner. Version lookups and downloads are acceptable.
-- Every tool a change introduces is checked for usage or error reporting, and that reporting is switched off in the same change.
+Nothing used may report usage or errors about the repository's owner. Version lookups and downloads are acceptable.

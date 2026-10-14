@@ -34,10 +34,10 @@ Follow [Conventional Branch](https://conventionalbranch.org/): `<type>/<descript
 
 - Types: `feat`, `fix`, `hotfix`, `release`, `chore`. Match the type to the Conventional Commit type of the work.
 - Lowercase letters, digits and hyphens only. Dots are allowed only for version numbers (`release/v1.2.0`). No underscores, spaces, consecutive separators, or leading/trailing separators.
+- Exception: release-please's branch, `release-please--branches--main`, is exempt from these naming rules, because its name cannot be configured.
 - Put the issue number in the description when one applies: `feat/issue-123-add-login-page`.
 - Do not use agent-source prefixes (`ai/`, `claude/`, etc.); branches are named by purpose only.
 - Never commit directly to `main`.
-- The one exception is release-please's branch, `release-please--branches--main`, whose name cannot be configured.
 
 ### Commits
 
@@ -56,9 +56,9 @@ Follow [Conventional Commits 1.0.0](https://www.conventionalcommits.org/en/v1.0.
 
 ### Pull request body
 
-The pull request body becomes the squash commit body, which release-please parses. Its parsing fails in ways nothing reports:
+The pull request body becomes the squash commit body, which release-please parses:
 
-- A paragraph that starts with a commit type becomes an extra changelog entry and counts toward the version. Start a paragraph with a commit type only to add that entry.
+- A paragraph that starts with a commit type becomes an extra changelog entry and counts toward the version.
 - A line with nested parentheses after its first word drops the whole commit silently.
 - A subject that is not a valid Conventional Commit is dropped silently.
 
