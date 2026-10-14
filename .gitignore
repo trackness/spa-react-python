@@ -1,7 +1,7 @@
 # Claude Code local-only settings
 .claude/settings.local.json
 
-# macOS (github/gitignore Global/macOS.gitignore)
+# macOS (github/gitignore Global/macOS.gitignore, plus *.icloud from gitignore.io's macOS template)
 .DS_Store
 .localized
 __MACOSX/
