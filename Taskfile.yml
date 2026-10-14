@@ -7,7 +7,7 @@ tasks:
     dotenv: ['../.env', '../.env.example']
     cmd: >-
       uv run --locked uvicorn app.main:app --reload --reload-dir src
-      --host "$APP_LISTEN_ADDRESS__HOST" --port "$APP_LISTEN_ADDRESS__PORT"
+      --log-config logging.json --host "$APP_LISTEN_ADDRESS__HOST" --port "$APP_LISTEN_ADDRESS__PORT"
 
   install-hooks:
     desc: Install the commit hooks into this clone's own hooks directory

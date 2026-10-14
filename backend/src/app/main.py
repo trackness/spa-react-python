@@ -4,6 +4,9 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
 from app.settings import Settings
+from app.telemetry import tracer_provider
+
+UNTRACED_PATHS = frozenset({"/health/live"})
 
 
 @asynccontextmanager
@@ -12,7 +15,14 @@ async def lifespan(_: FastAPI) -> AsyncGenerator[None]:
     yield
 
 
-app = FastAPI(lifespan=lifespan)
+app = FastAPI(
+    lifespan=lifespan,
+    telemetry={
+        "tracer_provider": tracer_provider,
+        "auto_configure": False,
+        "exclude": lambda scope: scope["path"] in UNTRACED_PATHS,
+    },
+)
 
 
 @app.get("/health/live")
