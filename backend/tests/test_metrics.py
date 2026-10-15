@@ -1,5 +1,6 @@
 from http import HTTPStatus
 
+import pytest
 from fastapi.testclient import TestClient
 from prometheus_client.parser import text_string_to_metric_families
 from prometheus_client.samples import Sample
@@ -11,14 +12,46 @@ REQUEST_COUNT = "http_server_request_duration_seconds_count"
 UNROUTED_PATH = "/no-such-route"
 
 
-def scrape(client: TestClient) -> list[Sample]:
-    response = client.get("/metrics", follow_redirects=False)
-    assert response.status_code == HTTPStatus.OK
+def samples_in(text: str) -> list[Sample]:
     return [
         sample
-        for family in text_string_to_metric_families(response.text)
+        for family in text_string_to_metric_families(text)
         for sample in family.samples
     ]
+
+
+def scrape(client: TestClient) -> list[Sample]:
+    # a redirect would be followed silently, hiding a mounted app's 307
+    response = client.get("/metrics", follow_redirects=False)
+    assert response.status_code == HTTPStatus.OK
+    return samples_in(response.text)
+
+
+def request_counts(samples: list[Sample]) -> list[Sample]:
+    return [sample for sample in samples if sample.name == REQUEST_COUNT]
+
+
+@pytest.fixture
+def samples_after_a_request() -> list[Sample]:
+    with TestClient(app) as client:
+        client.get(UNROUTED_PATH)
+        return scrape(client)
+
+
+def test_metrics_are_compressed_when_the_scraper_accepts_gzip() -> None:
+    with TestClient(app) as client:
+        response = client.get("/metrics", headers={"Accept-Encoding": "gzip"})
+
+    assert response.headers["content-encoding"] == "gzip"
+
+
+def test_metrics_can_be_narrowed_to_the_named_series() -> None:
+    with TestClient(app) as client:
+        client.get(UNROUTED_PATH)
+        response = client.get("/metrics", params={"name[]": REQUEST_COUNT})
+
+    names = {sample.name for sample in samples_in(response.text)}
+    assert names == {REQUEST_COUNT}
 
 
 def test_metrics_are_served_as_openmetrics_when_the_scraper_asks() -> None:
@@ -32,16 +65,8 @@ def test_metrics_are_served_as_openmetrics_when_the_scraper_asks() -> None:
     assert response.text.endswith("# EOF\n")
 
 
-def request_counts(samples: list[Sample]) -> list[Sample]:
-    return [sample for sample in samples if sample.name == REQUEST_COUNT]
-
-
-def test_request_metrics_are_scrapeable() -> None:
-    with TestClient(app) as client:
-        client.get(UNROUTED_PATH)
-        samples = scrape(client)
-
-    assert request_counts(samples)
+def test_request_metrics_are_scrapeable(samples_after_a_request: list[Sample]) -> None:
+    assert request_counts(samples_after_a_request)
 
 
 def test_health_and_metrics_requests_are_not_measured() -> None:
@@ -56,11 +81,9 @@ def test_health_and_metrics_requests_are_not_measured() -> None:
 
 
 def test_every_metric_names_the_project_and_release(
-    project_name: str, release_version: str
+    samples_after_a_request: list[Sample], project_name: str, release_version: str
 ) -> None:
-    with TestClient(app) as client:
-        client.get(UNROUTED_PATH)
-        samples = scrape(client)
+    samples = samples_after_a_request
 
     assert samples
     assert all(sample.labels.get("service_name") == project_name for sample in samples)

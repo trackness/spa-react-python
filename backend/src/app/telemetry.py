@@ -21,8 +21,9 @@ resource = Resource.create(
     }
 )
 tracer_provider = TracerProvider(sampler=ALWAYS_ON, resource=resource)
-# its own registry leaves out prometheus_client's default collectors
-metrics_registry = CollectorRegistry()
+# its own registry leaves out prometheus_client's default collectors; the reader
+# cannot name its metrics in advance, so a scrape narrowed by name still asks it
+metrics_registry = CollectorRegistry(support_collectors_without_names=True)
 # adding a reader at runtime resets its totals, so the reader is fixed here
 meter_provider = MeterProvider(
     metric_readers=[
