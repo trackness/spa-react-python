@@ -12,9 +12,11 @@ export function createAppRouter(history?: RouterHistory) {
 	return createRouter({ routeTree, history });
 }
 
+type AppRouter = ReturnType<typeof createAppRouter>;
+
 declare module "@tanstack/react-router" {
 	interface Register {
-		router: ReturnType<typeof createAppRouter>;
+		router: AppRouter;
 	}
 }
 
@@ -23,7 +25,7 @@ export function App({
 	router,
 }: {
 	queryClient: QueryClient;
-	router: ReturnType<typeof createAppRouter>;
+	router: AppRouter;
 }) {
 	return (
 		<StrictMode>

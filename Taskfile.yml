@@ -134,6 +134,5 @@ tasks:
     deps: [frontend:client]
     cmds:
       - git diff --exit-code -- src/client
-      # git diff leaves out new files, such as one for a new operation
-      - git ls-files --others --exclude-standard -- src/client
-      - test -z "$(git ls-files --others --exclude-standard -- src/client)"
+      # git diff leaves out new files, such as one for a new operation; grep lists them and fails on any
+      - git ls-files --others --exclude-standard -- src/client | (! grep .)

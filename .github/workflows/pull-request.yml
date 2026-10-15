@@ -22,6 +22,8 @@ jobs:
       - uses: pnpm/setup@v3
         with:
           working-directory: frontend
+          # the tasks install the Frontend's dependencies themselves, as they do locally
+          install: false
       - name: Lint
         run: task lint
       - name: Format check
