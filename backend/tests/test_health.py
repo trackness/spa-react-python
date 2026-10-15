@@ -29,3 +29,15 @@ def test_readiness_fails_when_the_database_does_not_answer(database_file: Path) 
 
     assert response.status_code == HTTPStatus.SERVICE_UNAVAILABLE
     assert response.json() == {"status": "unavailable"}
+
+
+def test_the_api_contract_declares_the_body_readiness_fails_with() -> None:
+    with TestClient(app) as client:
+        response = client.get("/openapi.json")
+
+    responses = response.json()["paths"]["/health/ready"]["get"]["responses"]
+    schema = responses[str(HTTPStatus.SERVICE_UNAVAILABLE)]["content"][
+        "application/json"
+    ]["schema"]
+    assert schema["type"] == "object"
+    assert schema["additionalProperties"] == {"type": "string"}

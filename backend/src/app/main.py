@@ -38,7 +38,10 @@ def liveness() -> dict[str, str]:
     return {"status": "ok"}
 
 
-@app.get("/health/ready")
+@app.get(
+    "/health/ready",
+    responses={HTTPStatus.SERVICE_UNAVAILABLE: {"model": dict[str, str]}},
+)
 def readiness(request: Request, response: Response) -> dict[str, str]:
     try:
         with request.state.engine.connect() as connection:

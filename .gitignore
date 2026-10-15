@@ -57,8 +57,11 @@ report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 # Task checksums
 .task/
 
-# Kubb debug reports
-.kubb/
+# Kubb debug reports, written where Kubb runs; the Client's own .kubb/ is generated code
+/frontend/.kubb/
+
+# The Backend's OpenAPI document, exported to generate the Client
+backend/openapi.json
 
 # Local environment and database
 .env
