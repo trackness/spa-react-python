@@ -1,10 +1,11 @@
-import { type QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
 	createRouter,
 	type RouterHistory,
 	RouterProvider,
 } from "@tanstack/react-router";
-import { StrictMode } from "react";
+import { StrictMode, useState } from "react";
+import { ResponseError } from "@/client/.kubb/client";
 import { routeTree } from "@/routeTree.gen";
 
 // without a history the router follows the browser's address bar
@@ -20,13 +21,19 @@ declare module "@tanstack/react-router" {
 	}
 }
 
-export function App({
-	queryClient,
-	router,
-}: {
-	queryClient: QueryClient;
-	router: AppRouter;
-}) {
+export function App({ router }: { router: AppRouter }) {
+	const [queryClient] = useState(
+		() =>
+			new QueryClient({
+				defaultOptions: {
+					queries: {
+						// an error status is the App's answer; only a request that got none is worth repeating
+						retry: (failureCount, error) =>
+							!ResponseError.is(error) && failureCount < 3,
+					},
+				},
+			}),
+	);
 	return (
 		<StrictMode>
 			<QueryClientProvider client={queryClient}>
