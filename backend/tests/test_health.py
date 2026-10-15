@@ -1,6 +1,8 @@
 from http import HTTPStatus
 from pathlib import Path
+from typing import Any
 
+import pytest
 from fastapi.testclient import TestClient
 
 from app.main import app
@@ -29,3 +31,40 @@ def test_readiness_fails_when_the_database_does_not_answer(database_file: Path) 
 
     assert response.status_code == HTTPStatus.SERVICE_UNAVAILABLE
     assert response.json() == {"status": "unavailable"}
+
+
+@pytest.fixture
+def openapi() -> dict[str, Any]:
+    with TestClient(app) as client:
+        return client.get("/openapi.json").json()
+
+
+@pytest.mark.parametrize(
+    ("path", "status", "body_status"),
+    [
+        ("/health/live", HTTPStatus.OK, "ok"),
+        ("/health/ready", HTTPStatus.OK, "ok"),
+        ("/health/ready", HTTPStatus.SERVICE_UNAVAILABLE, "unavailable"),
+    ],
+)
+def test_the_api_contract_types_each_health_body(
+    openapi: dict[str, Any], path: str, status: HTTPStatus, body_status: str
+) -> None:
+    response = openapi["paths"][path]["get"]["responses"][str(status)]
+    reference = response["content"]["application/json"]["schema"]["$ref"]
+    body = openapi["components"]["schemas"][
+        reference.removeprefix("#/components/schemas/")
+    ]
+
+    assert body["required"] == ["status"]
+    assert body["properties"]["status"]["const"] == body_status
+
+
+@pytest.mark.parametrize(
+    ("path", "operation_id"),
+    [("/health/live", "liveness"), ("/health/ready", "readiness")],
+)
+def test_the_api_contract_names_each_operation_after_its_function(
+    openapi: dict[str, Any], path: str, operation_id: str
+) -> None:
+    assert openapi["paths"][path]["get"]["operationId"] == operation_id

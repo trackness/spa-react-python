@@ -1,5 +1,8 @@
 version: '3'
 
+env:
+  KUBB_DISABLE_TELEMETRY: '1'
+
 tasks:
   run:
     desc: Start the App, restarting it whenever the Backend's code changes
@@ -9,6 +12,10 @@ tasks:
       uv run --locked uvicorn app.main:app --reload --reload-dir src
       --log-config logging.json --host "$APP_LISTEN_ADDRESS__HOST" --port "$APP_LISTEN_ADDRESS__PORT"
 
+  dev:
+    desc: Start the App and Vite, both reloading on change, with Vite proxying API requests to the App
+    deps: [run, frontend:dev]
+
   install-hooks:
     desc: Install the commit hooks into this clone's own hooks directory
     dir: backend
@@ -16,23 +23,23 @@ tasks:
 
   lint:
     desc: Lint everything
-    deps: [backend:lint]
+    deps: [backend:lint, frontend:lint]
 
   format:
     desc: Format everything
-    deps: [backend:format]
+    deps: [backend:format, frontend:format]
 
   format:check:
     desc: Check that everything is formatted
-    deps: [backend:format:check]
+    deps: [backend:format:check, frontend:format:check]
 
   typecheck:
     desc: Type check everything
-    deps: [backend:typecheck]
+    deps: [backend:typecheck, frontend:typecheck]
 
   test:
     desc: Run every test
-    deps: [backend:test]
+    deps: [backend:test, frontend:test]
 
   backend:lint:
     desc: Lint the Backend
@@ -59,6 +66,11 @@ tasks:
     dir: backend
     cmd: uv run --locked pytest
 
+  backend:openapi:
+    desc: Export the Backend's OpenAPI document to backend/openapi.json
+    dir: backend
+    cmd: uv run --locked python -c 'import json; from app.main import app; print(json.dumps(app.openapi(), indent=2))' > openapi.json
+
   backend:migration:create:
     desc: 'Create a migration from the models, named by the words after --: task backend:migration:create -- add widgets'
     dir: backend
@@ -73,3 +85,54 @@ tasks:
     dir: backend
     dotenv: ['../.env', '../.env.example']
     cmd: rm -f "$APP_DATABASE_FILE" "$APP_DATABASE_FILE-wal" "$APP_DATABASE_FILE-shm"
+
+  frontend:dev:
+    desc: Start Vite with hot reload, proxying API requests to the App
+    dir: frontend
+    dotenv: ['../.env', '../.env.example']
+    cmd: pnpm exec vite
+
+  frontend:build:
+    desc: Build the Frontend into frontend/dist
+    dir: frontend
+    cmd: pnpm exec vite build
+
+  frontend:lint:
+    desc: Lint the Frontend
+    dir: frontend
+    cmd: pnpm exec biome check --formatter-enabled=false --error-on-warnings
+
+  frontend:format:
+    desc: Format the Frontend
+    dir: frontend
+    cmd: pnpm exec biome format --write
+
+  frontend:format:check:
+    desc: Check that the Frontend is formatted
+    dir: frontend
+    cmd: pnpm exec biome format
+
+  frontend:typecheck:
+    desc: Type check the Frontend
+    dir: frontend
+    cmd: pnpm exec tsc -b
+
+  frontend:test:
+    desc: Run the Frontend's tests
+    dir: frontend
+    cmd: pnpm exec vitest run
+
+  frontend:client:
+    desc: Regenerate the Client from the Backend's OpenAPI document
+    dir: frontend
+    deps: [backend:openapi]
+    cmd: pnpm exec kubb generate
+
+  frontend:client:check:
+    desc: Fail when the Client in git differs from the one the Backend's OpenAPI document generates
+    dir: frontend
+    deps: [frontend:client]
+    cmds:
+      - git diff --exit-code -- src/client
+      # git diff leaves out new files, such as one for a new operation; grep lists them and fails on any
+      - git ls-files --others --exclude-standard -- src/client | (! grep .)
