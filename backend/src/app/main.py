@@ -6,7 +6,6 @@ from fastapi import FastAPI, Request, Response
 from prometheus_client import CollectorRegistry, make_asgi_app
 from sqlalchemy import Engine, text
 from sqlalchemy.exc import DBAPIError
-from starlette.routing import Route
 from starlette.types import Receive, Scope, Send
 
 from app.database import database_engine, migrate
@@ -66,4 +65,5 @@ class PrometheusEndpoint:
         await self.app(scope, receive, send)
 
 
-app.router.routes.append(Route("/metrics", PrometheusEndpoint(metrics_registry)))
+# add_route is annotated for request handlers only; the Route it builds serves ASGI too
+app.add_route("/metrics", PrometheusEndpoint(metrics_registry))  # ty: ignore[invalid-argument-type]
