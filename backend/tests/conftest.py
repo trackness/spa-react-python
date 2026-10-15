@@ -18,6 +18,14 @@ def release_version() -> str:
     return (BACKEND.parent / "version.txt").read_text().strip()
 
 
+@pytest.fixture(params=["/health/live", "/health/ready", "/metrics"])
+def excluded_path(request: pytest.FixtureRequest) -> str:
+    """Each path kept out of traces and request metrics."""
+    path = request.param
+    assert isinstance(path, str)
+    return path
+
+
 @pytest.fixture
 def database_file(tmp_path: Path) -> Path:
     return tmp_path / "app.db"

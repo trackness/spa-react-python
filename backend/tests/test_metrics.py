@@ -101,14 +101,17 @@ def test_every_accept_header_is_weighed(client: TestClient) -> None:
     assert response.headers["content-type"].startswith("application/openmetrics-text")
 
 
-def test_health_and_metrics_requests_are_not_measured(client: TestClient) -> None:
-    client.get("/health/live")
-    client.get("/health/ready")
-    scrape(client)
-    samples = scrape(client)
+def requests_measured(client: TestClient) -> float:
+    return sum(sample.value for sample in request_counts(scrape(client)))
 
-    routes = {sample.labels.get("http_route") for sample in request_counts(samples)}
-    assert routes.isdisjoint({"/health/live", "/health/ready", "/metrics"})
+
+def test_health_and_metrics_requests_are_not_measured(
+    client: TestClient, excluded_path: str
+) -> None:
+    before = requests_measured(client)
+    client.get(excluded_path)
+
+    assert requests_measured(client) == before
 
 
 def test_every_metric_names_the_project_and_release(

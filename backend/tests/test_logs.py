@@ -72,11 +72,10 @@ def test_spans_are_recorded_even_when_the_caller_does_not_sample(
     assert line["trace_sampled"] is True
 
 
-@pytest.mark.parametrize("path", ["/health/live", "/health/ready", "/metrics"])
 def test_health_and_metrics_are_not_traced(
-    capfd: pytest.CaptureFixture[str], path: str
+    capfd: pytest.CaptureFixture[str], excluded_path: str
 ) -> None:
-    line = access_line(capfd, path, f"00-{TRACE_ID}-{PARENT_SPAN_ID}-01")
+    line = access_line(capfd, excluded_path, f"00-{TRACE_ID}-{PARENT_SPAN_ID}-01")
 
     assert line["trace_id"] == UNTRACED
 
