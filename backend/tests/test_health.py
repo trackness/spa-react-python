@@ -40,7 +40,7 @@ def openapi() -> dict[str, Any]:
 
 
 @pytest.mark.parametrize(
-    ("path", "status", "value"),
+    ("path", "status", "body_status"),
     [
         ("/health/live", HTTPStatus.OK, "ok"),
         ("/health/ready", HTTPStatus.OK, "ok"),
@@ -48,7 +48,7 @@ def openapi() -> dict[str, Any]:
     ],
 )
 def test_the_api_contract_types_each_health_body(
-    openapi: dict[str, Any], path: str, status: HTTPStatus, value: str
+    openapi: dict[str, Any], path: str, status: HTTPStatus, body_status: str
 ) -> None:
     response = openapi["paths"][path]["get"]["responses"][str(status)]
     reference = response["content"]["application/json"]["schema"]["$ref"]
@@ -57,7 +57,7 @@ def test_the_api_contract_types_each_health_body(
     ]
 
     assert body["required"] == ["status"]
-    assert body["properties"]["status"]["const"] == value
+    assert body["properties"]["status"]["const"] == body_status
 
 
 @pytest.mark.parametrize(
