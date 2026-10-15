@@ -1,3 +1,4 @@
+from collections.abc import Iterator
 from http import HTTPStatus
 
 import pytest
@@ -20,79 +21,100 @@ def samples_in(text: str) -> list[Sample]:
     ]
 
 
-def scrape(client: TestClient) -> list[Sample]:
-    # a redirect would be followed silently, hiding a mounted app's 307
-    response = client.get("/metrics", follow_redirects=False)
-    assert response.status_code == HTTPStatus.OK
-    return samples_in(response.text)
-
-
 def request_counts(samples: list[Sample]) -> list[Sample]:
     return [sample for sample in samples if sample.name == REQUEST_COUNT]
 
 
 @pytest.fixture
-def samples_after_a_request() -> list[Sample]:
-    with TestClient(app) as client:
+def client() -> Iterator[TestClient]:
+    """A client of the App after one measured request."""
+    # following a redirect would hide the 307 a mounted metrics app answers with
+    with TestClient(app, follow_redirects=False) as client:
         client.get(UNROUTED_PATH)
-        return scrape(client)
+        yield client
 
 
-def test_metrics_are_compressed_when_the_scraper_accepts_gzip() -> None:
-    with TestClient(app) as client:
-        response = client.get("/metrics", headers={"Accept-Encoding": "gzip"})
+def scrape(client: TestClient) -> list[Sample]:
+    response = client.get("/metrics")
+    assert response.status_code == HTTPStatus.OK
+    return samples_in(response.text)
+
+
+def test_request_metrics_are_scrapeable(client: TestClient) -> None:
+    assert request_counts(scrape(client))
+
+
+def test_metrics_answer_a_head_request(client: TestClient) -> None:
+    assert client.head("/metrics").status_code == HTTPStatus.OK
+
+
+def test_metrics_are_compressed_when_the_scraper_accepts_gzip(
+    client: TestClient,
+) -> None:
+    response = client.get("/metrics", headers={"Accept-Encoding": "gzip"})
 
     assert response.headers["content-encoding"] == "gzip"
 
 
-def test_metrics_are_uncompressed_when_the_scraper_does_not_accept_gzip() -> None:
-    with TestClient(app) as client:
-        client.get(UNROUTED_PATH)
-        response = client.get("/metrics", headers={"Accept-Encoding": "identity"})
+def test_metrics_are_uncompressed_when_the_scraper_does_not_accept_gzip(
+    client: TestClient,
+) -> None:
+    response = client.get("/metrics", headers={"Accept-Encoding": "identity"})
 
     assert "content-encoding" not in response.headers
     assert request_counts(samples_in(response.text))
 
 
-def test_metrics_can_be_narrowed_to_the_named_series() -> None:
-    with TestClient(app) as client:
-        client.get(UNROUTED_PATH)
-        response = client.get("/metrics", params={"name[]": REQUEST_COUNT})
+def test_metrics_can_be_narrowed_to_the_named_series(client: TestClient) -> None:
+    response = client.get("/metrics", params={"name[]": REQUEST_COUNT})
 
     names = {sample.name for sample in samples_in(response.text)}
     assert names == {REQUEST_COUNT}
 
 
-def test_metrics_are_served_as_openmetrics_when_the_scraper_asks() -> None:
-    with TestClient(app) as client:
-        response = client.get(
-            "/metrics",
-            headers={"Accept": "application/openmetrics-text; version=1.0.0"},
-        )
+def test_a_blank_name_does_not_narrow_the_metrics(client: TestClient) -> None:
+    response = client.get("/metrics", params={"name[]": ""})
+
+    assert request_counts(samples_in(response.text))
+
+
+def test_metrics_are_served_as_openmetrics_when_the_scraper_asks(
+    client: TestClient,
+) -> None:
+    response = client.get(
+        "/metrics", headers={"Accept": "application/openmetrics-text; version=1.0.0"}
+    )
 
     assert response.headers["content-type"].startswith("application/openmetrics-text")
     assert response.text.endswith("# EOF\n")
 
 
-def test_request_metrics_are_scrapeable(samples_after_a_request: list[Sample]) -> None:
-    assert request_counts(samples_after_a_request)
+def test_every_accept_header_is_weighed(client: TestClient) -> None:
+    response = client.get(
+        "/metrics",
+        headers=[
+            ("Accept", "text/plain"),
+            ("Accept", "application/openmetrics-text; version=1.0.0"),
+        ],
+    )
+
+    assert response.headers["content-type"].startswith("application/openmetrics-text")
 
 
-def test_health_and_metrics_requests_are_not_measured() -> None:
-    with TestClient(app) as client:
-        client.get("/health/live")
-        client.get("/health/ready")
-        scrape(client)
-        samples = scrape(client)
+def test_health_and_metrics_requests_are_not_measured(client: TestClient) -> None:
+    client.get("/health/live")
+    client.get("/health/ready")
+    scrape(client)
+    samples = scrape(client)
 
     routes = {sample.labels.get("http_route") for sample in request_counts(samples)}
     assert routes.isdisjoint({"/health/live", "/health/ready", "/metrics"})
 
 
 def test_every_metric_names_the_project_and_release(
-    samples_after_a_request: list[Sample], project_name: str, release_version: str
+    client: TestClient, project_name: str, release_version: str
 ) -> None:
-    samples = samples_after_a_request
+    samples = scrape(client)
 
     assert samples
     assert all(sample.labels.get("service_name") == project_name for sample in samples)
