@@ -22,7 +22,7 @@ from sqlalchemy import (
 from sqlalchemy.exc import OperationalError
 
 from app import BACKEND
-from app.database import Base, alembic_config, database_engine
+from app.database import Base, alembic_config, database_engine, migrate
 from app.main import app
 
 FAILING_MIGRATION = """
@@ -98,9 +98,15 @@ def widget(versions: Path) -> Iterator[Table]:  # noqa: ARG001
 
 def migrate_to_the_models(message: str) -> None:
     """Create a migration from the models, then start the App, which applies it."""
+    migrate()  # autogenerate needs the database at the latest migration
     command.revision(alembic_config(), message=message, autogenerate=True)
     with TestClient(app):
         pass
+
+
+def table_names(database_file: Path) -> list[str]:
+    with closing(sqlite3.connect(database_file)) as database:
+        return [name for [name] in database.execute("SELECT name FROM sqlite_master")]
 
 
 def constraint_names(database_file: Path) -> list[str | None]:
@@ -160,17 +166,14 @@ def test_a_failed_migration_leaves_the_database_unchanged(database_file: Path) -
     with pytest.raises(OperationalError), TestClient(app):
         pass
 
-    with closing(sqlite3.connect(database_file)) as database:
-        tables = database.execute("SELECT name FROM sqlite_master").fetchall()
-
-    assert ("half_done",) not in tables
+    assert "half_done" not in table_names(database_file)
 
 
 def test_the_app_migrates_the_database_before_it_serves(database_file: Path) -> None:
-    with TestClient(app), closing(sqlite3.connect(database_file)) as database:
-        tables = database.execute("SELECT name FROM sqlite_master").fetchall()
+    with TestClient(app):
+        tables = table_names(database_file)
 
-    assert ("alembic_version",) in tables
+    assert "alembic_version" in tables
 
 
 def test_the_database_uses_write_ahead_logging(database_file: Path) -> None:
