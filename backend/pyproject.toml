@@ -13,6 +13,7 @@ dependencies = [
     "pydantic-settings>=2.16.0",
     "python-json-logger>=4.2.0",
     "sqlalchemy>=2.1.4",
+    "starlette>=1.8.0",
     "uvicorn>=0.54.0",
 ]
 
