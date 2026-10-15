@@ -3,7 +3,7 @@ from contextlib import asynccontextmanager
 from http import HTTPStatus
 
 from fastapi import FastAPI, Request, Response
-from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
+from prometheus_client.exposition import choose_encoder
 from sqlalchemy import Engine, text
 from sqlalchemy.exc import DBAPIError
 
@@ -51,5 +51,6 @@ def readiness(request: Request, response: Response) -> dict[str, str]:
 
 
 @app.get("/metrics")
-def metrics() -> Response:
-    return Response(generate_latest(metrics_registry), media_type=CONTENT_TYPE_LATEST)
+def metrics(request: Request) -> Response:
+    encoder, content_type = choose_encoder(request.headers.get("accept", ""))
+    return Response(encoder(metrics_registry), media_type=content_type)

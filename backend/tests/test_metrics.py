@@ -21,6 +21,17 @@ def scrape(client: TestClient) -> list[Sample]:
     ]
 
 
+def test_metrics_are_served_as_openmetrics_when_the_scraper_asks() -> None:
+    with TestClient(app) as client:
+        response = client.get(
+            "/metrics",
+            headers={"Accept": "application/openmetrics-text; version=1.0.0"},
+        )
+
+    assert response.headers["content-type"].startswith("application/openmetrics-text")
+    assert response.text.endswith("# EOF\n")
+
+
 def request_counts(samples: list[Sample]) -> list[Sample]:
     return [sample for sample in samples if sample.name == REQUEST_COUNT]
 
