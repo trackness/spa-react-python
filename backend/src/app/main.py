@@ -3,14 +3,12 @@ from contextlib import asynccontextmanager
 from http import HTTPStatus
 
 from fastapi import FastAPI, Request, Response
-from prometheus_client import CollectorRegistry, make_asgi_app
 from sqlalchemy import Engine, text
 from sqlalchemy.exc import DBAPIError
-from starlette.types import Receive, Scope, Send
 
 from app.database import database_engine, migrate
 from app.settings import Settings
-from app.telemetry import meter_provider, metrics_registry, tracer_provider
+from app.telemetry import meter_provider, metrics_endpoint, tracer_provider
 
 TELEMETRY_EXCLUDED_PATHS = frozenset({"/health/live", "/health/ready", "/metrics"})
 
@@ -51,19 +49,5 @@ def readiness(request: Request, response: Response) -> dict[str, str]:
     return {"status": "ok"}
 
 
-class PrometheusEndpoint:
-    """prometheus_client's own endpoint, routed at exactly /metrics.
-
-    A mount would redirect /metrics with a 307, and a route treats a function as a
-    request handler, so the library's ASGI app is routed through this callable object.
-    """
-
-    def __init__(self, registry: CollectorRegistry) -> None:
-        self.app = make_asgi_app(registry)
-
-    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
-        await self.app(scope, receive, send)
-
-
 # add_route is annotated for request handlers only; the Route it builds serves ASGI too
-app.add_route("/metrics", PrometheusEndpoint(metrics_registry))  # ty: ignore[invalid-argument-type]
+app.add_route("/metrics", metrics_endpoint)  # ty: ignore[invalid-argument-type]
