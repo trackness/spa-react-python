@@ -1,2 +1,2 @@
-export { livenessHealthLiveGet } from './livenessHealthLiveGet'
-export { readinessHealthReadyGet } from './readinessHealthReadyGet'
+export { liveness } from './liveness'
+export { readiness } from './readiness'

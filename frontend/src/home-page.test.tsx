@@ -1,27 +1,19 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import {
-	createMemoryHistory,
-	createRouter,
-	RouterProvider,
-} from "@tanstack/react-router";
+import { QueryClient } from "@tanstack/react-query";
+import { createMemoryHistory } from "@tanstack/react-router";
 import { render, screen } from "@testing-library/react";
 import { HttpResponse, http } from "msw";
 import { expect, test } from "vitest";
-import { routeTree } from "@/routeTree.gen";
+import { App, createAppRouter } from "@/app";
 import { server } from "@/test/server";
 
 function renderHomePage() {
-	const queryClient = new QueryClient({
-		defaultOptions: { queries: { retry: false } },
-	});
-	const router = createRouter({
-		routeTree,
-		history: createMemoryHistory({ initialEntries: ["/"] }),
-	});
 	render(
-		<QueryClientProvider client={queryClient}>
-			<RouterProvider router={router} />
-		</QueryClientProvider>,
+		<App
+			queryClient={
+				new QueryClient({ defaultOptions: { queries: { retry: false } } })
+			}
+			router={createAppRouter(createMemoryHistory({ initialEntries: ["/"] }))}
+		/>,
 	);
 }
 
@@ -35,7 +27,7 @@ test("the home page shows the App is ready", async () => {
 	expect(await screen.findByText("The App is ready.")).toBeInTheDocument();
 });
 
-test("the home page shows why the App is not ready", async () => {
+test("the home page shows the status the App is not ready with", async () => {
 	server.use(
 		http.get("/health/ready", () =>
 			HttpResponse.json({ status: "unavailable" }, { status: 503 }),
@@ -45,8 +37,16 @@ test("the home page shows why the App is not ready", async () => {
 	renderHomePage();
 
 	expect(
-		await screen.findByText(
-			/^The App is not ready: .* 503 Service Unavailable$/,
-		),
+		await screen.findByText("The App is not ready: unavailable."),
+	).toBeInTheDocument();
+});
+
+test("the home page shows the App did not answer", async () => {
+	server.use(http.get("/health/ready", () => HttpResponse.error()));
+
+	renderHomePage();
+
+	expect(
+		await screen.findByText("The App did not answer."),
 	).toBeInTheDocument();
 });

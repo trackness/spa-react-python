@@ -1,2 +1,2 @@
-export { livenessHealthLiveGetQueryKey, livenessHealthLiveGetQueryOptions } from './useLivenessHealthLiveGet'
-export { readinessHealthReadyGetQueryKey, readinessHealthReadyGetQueryOptions } from './useReadinessHealthReadyGet'
+export { livenessQueryKey, livenessQueryOptions } from './useLiveness'
+export { readinessQueryKey, readinessQueryOptions } from './useReadiness'

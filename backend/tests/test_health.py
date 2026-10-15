@@ -1,6 +1,8 @@
 from http import HTTPStatus
 from pathlib import Path
+from typing import Any
 
+import pytest
 from fastapi.testclient import TestClient
 
 from app.main import app
@@ -31,13 +33,38 @@ def test_readiness_fails_when_the_database_does_not_answer(database_file: Path) 
     assert response.json() == {"status": "unavailable"}
 
 
-def test_the_api_contract_declares_the_body_readiness_fails_with() -> None:
+@pytest.fixture
+def openapi() -> dict[str, Any]:
     with TestClient(app) as client:
-        response = client.get("/openapi.json")
+        return client.get("/openapi.json").json()
 
-    responses = response.json()["paths"]["/health/ready"]["get"]["responses"]
-    schema = responses[str(HTTPStatus.SERVICE_UNAVAILABLE)]["content"][
-        "application/json"
-    ]["schema"]
-    assert schema["type"] == "object"
-    assert schema["additionalProperties"] == {"type": "string"}
+
+@pytest.mark.parametrize(
+    ("path", "status", "value"),
+    [
+        ("/health/live", HTTPStatus.OK, "ok"),
+        ("/health/ready", HTTPStatus.OK, "ok"),
+        ("/health/ready", HTTPStatus.SERVICE_UNAVAILABLE, "unavailable"),
+    ],
+)
+def test_the_api_contract_types_each_health_body(
+    openapi: dict[str, Any], path: str, status: HTTPStatus, value: str
+) -> None:
+    response = openapi["paths"][path]["get"]["responses"][str(status)]
+    reference = response["content"]["application/json"]["schema"]["$ref"]
+    body = openapi["components"]["schemas"][
+        reference.removeprefix("#/components/schemas/")
+    ]
+
+    assert body["required"] == ["status"]
+    assert body["properties"]["status"]["const"] == value
+
+
+@pytest.mark.parametrize(
+    ("path", "operation_id"),
+    [("/health/live", "liveness"), ("/health/ready", "readiness")],
+)
+def test_the_api_contract_names_each_operation_after_its_function(
+    openapi: dict[str, Any], path: str, operation_id: str
+) -> None:
+    assert openapi["paths"][path]["get"]["operationId"] == operation_id

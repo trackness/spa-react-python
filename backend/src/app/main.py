@@ -1,8 +1,12 @@
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 from http import HTTPStatus
+from typing import Literal
 
-from fastapi import FastAPI, Request, Response
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
+from fastapi.routing import APIRoute
+from pydantic import BaseModel
 from sqlalchemy import Engine, text
 from sqlalchemy.exc import DBAPIError
 
@@ -22,8 +26,17 @@ async def lifespan(_: FastAPI) -> AsyncGenerator[dict[str, Engine]]:
     engine.dispose()
 
 
+def operation_id(route: APIRoute) -> str:
+    """Name each operation after its function, as the generated Client names it.
+
+    The function names must therefore be unique across the App.
+    """
+    return route.name
+
+
 app = FastAPI(
     lifespan=lifespan,
+    generate_unique_id_function=operation_id,
     telemetry={
         "tracer_provider": tracer_provider,
         "meter_provider": meter_provider,
@@ -33,23 +46,34 @@ app = FastAPI(
 )
 
 
+class Healthy(BaseModel):
+    status: Literal["ok"]
+
+
+class Unavailable(BaseModel):
+    status: Literal["unavailable"]
+
+
 @app.get("/health/live")
-def liveness() -> dict[str, str]:
-    return {"status": "ok"}
+def liveness() -> Healthy:
+    return Healthy(status="ok")
 
 
 @app.get(
     "/health/ready",
-    responses={HTTPStatus.SERVICE_UNAVAILABLE: {"model": dict[str, str]}},
+    response_model=Healthy,
+    responses={HTTPStatus.SERVICE_UNAVAILABLE: {"model": Unavailable}},
 )
-def readiness(request: Request, response: Response) -> dict[str, str]:
+def readiness(request: Request) -> Healthy | JSONResponse:
     try:
         with request.state.engine.connect() as connection:
             connection.execute(text("SELECT 1"))
     except DBAPIError:
-        response.status_code = HTTPStatus.SERVICE_UNAVAILABLE
-        return {"status": "unavailable"}
-    return {"status": "ok"}
+        return JSONResponse(
+            Unavailable(status="unavailable").model_dump(),
+            status_code=HTTPStatus.SERVICE_UNAVAILABLE,
+        )
+    return Healthy(status="ok")
 
 
 # add_route is annotated for request handlers only; the Route it builds serves ASGI too
