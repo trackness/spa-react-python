@@ -1,7 +1,6 @@
 import json
 import threading
 import time
-import tomllib
 from collections.abc import Generator
 from contextlib import contextmanager
 from typing import Any
@@ -73,23 +72,21 @@ def test_spans_are_recorded_even_when_the_caller_does_not_sample(
     assert line["trace_sampled"] is True
 
 
-@pytest.mark.parametrize("path", ["/health/live", "/health/ready"])
-def test_health_is_not_traced(capfd: pytest.CaptureFixture[str], path: str) -> None:
-    line = access_line(capfd, path, f"00-{TRACE_ID}-{PARENT_SPAN_ID}-01")
+def test_health_and_metrics_are_not_traced(
+    capfd: pytest.CaptureFixture[str], excluded_path: str
+) -> None:
+    line = access_line(capfd, excluded_path, f"00-{TRACE_ID}-{PARENT_SPAN_ID}-01")
 
     assert line["trace_id"] == UNTRACED
 
 
 def test_every_log_line_names_the_project_and_release(
-    capfd: pytest.CaptureFixture[str],
+    capfd: pytest.CaptureFixture[str], project_name: str, release_version: str
 ) -> None:
-    project = tomllib.loads((BACKEND / "pyproject.toml").read_text())["project"]
-    version = (BACKEND.parent / "version.txt").read_text().strip()
-
     with running_app() as url:
         httpx2.get(url + "/health/live")
     lines = log_lines(capfd)
 
     assert lines
-    assert all(line["service.name"] == project["name"] for line in lines)
-    assert all(line["service.version"] == version for line in lines)
+    assert all(line["service.name"] == project_name for line in lines)
+    assert all(line["service.version"] == release_version for line in lines)

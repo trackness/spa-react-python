@@ -8,9 +8,9 @@ from sqlalchemy.exc import DBAPIError
 
 from app.database import database_engine, migrate
 from app.settings import Settings
-from app.telemetry import tracer_provider
+from app.telemetry import meter_provider, metrics_endpoint, tracer_provider
 
-UNTRACED_PATHS = frozenset({"/health/live", "/health/ready"})
+TELEMETRY_EXCLUDED_PATHS = frozenset({"/health/live", "/health/ready", "/metrics"})
 
 
 @asynccontextmanager
@@ -26,8 +26,9 @@ app = FastAPI(
     lifespan=lifespan,
     telemetry={
         "tracer_provider": tracer_provider,
+        "meter_provider": meter_provider,
         "auto_configure": False,
-        "exclude": lambda scope: scope["path"] in UNTRACED_PATHS,
+        "exclude": lambda scope: scope["path"] in TELEMETRY_EXCLUDED_PATHS,
     },
 )
 
@@ -46,3 +47,7 @@ def readiness(request: Request, response: Response) -> dict[str, str]:
         response.status_code = HTTPStatus.SERVICE_UNAVAILABLE
         return {"status": "unavailable"}
     return {"status": "ok"}
+
+
+# add_route is annotated for request handlers only; the Route it builds serves ASGI too
+app.add_route("/metrics", metrics_endpoint)  # ty: ignore[invalid-argument-type]

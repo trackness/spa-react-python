@@ -1,6 +1,29 @@
+import tomllib
 from pathlib import Path
 
 import pytest
+
+from app import BACKEND
+
+
+@pytest.fixture
+def project_name() -> str:
+    name = tomllib.loads((BACKEND / "pyproject.toml").read_text())["project"]["name"]
+    assert isinstance(name, str)
+    return name
+
+
+@pytest.fixture
+def release_version() -> str:
+    return (BACKEND.parent / "version.txt").read_text().strip()
+
+
+@pytest.fixture(params=["/health/live", "/health/ready", "/metrics"])
+def excluded_path(request: pytest.FixtureRequest) -> str:
+    """Each path kept out of traces and request metrics."""
+    path = request.param
+    assert isinstance(path, str)
+    return path
 
 
 @pytest.fixture
