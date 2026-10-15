@@ -58,3 +58,18 @@ tasks:
     desc: Run the Backend's tests
     dir: backend
     cmd: uv run --locked pytest
+
+  backend:migration:create:
+    desc: 'Create a migration from the models, named by the words after --: task backend:migration:create -- add widgets'
+    dir: backend
+    dotenv: ['../.env', '../.env.example']
+    cmds:
+      # autogenerate compares the models with a database at the latest migration
+      - uv run --locked alembic upgrade head
+      - uv run --locked alembic revision --autogenerate -m {{join " " .CLI_ARGS_LIST | shellQuote}}
+
+  backend:database:reset:
+    desc: Delete the local database while the App is stopped; the App creates and migrates it again when it next starts
+    dir: backend
+    dotenv: ['../.env', '../.env.example']
+    cmd: rm -f "$APP_DATABASE_FILE" "$APP_DATABASE_FILE-wal" "$APP_DATABASE_FILE-shm"

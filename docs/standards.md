@@ -16,6 +16,7 @@ Never hand-roll anything a strong implementation already does. Good dependencies
 
 - `from __future__ import annotations` is banned.
 - **Pydantic v2** and **pydantic-settings** are the preferred tools.
+- SQLAlchemy columns are declared as `Mapped[...]` annotations, with column options carried by `Annotated` types such as `Annotated[int, mapped_column(primary_key=True)]`. Never assign `= mapped_column(...)`: it returns `Any`, which hides a mismatch between a column and its annotation, and ty rejects it. An attribute SQLAlchemy supports only by assignment, such as `= relationship(...)`, carries `# ty: ignore[unsound-assignment]` on that line and nowhere else.
 
 ## API errors and forms
 

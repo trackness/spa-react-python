@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import Annotated
 
 from pydantic import BaseModel, Field, IPvAnyAddress
@@ -13,3 +14,4 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="APP_", env_nested_delimiter="__")
 
     listen_address: ListenAddress
+    database_file: Path

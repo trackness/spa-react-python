@@ -32,6 +32,7 @@ def test_an_invalid_setting_stops_the_app(
     [
         ("APP_LISTEN_ADDRESS__HOST", ("listen_address", "host")),
         ("APP_LISTEN_ADDRESS__PORT", ("listen_address", "port")),
+        ("APP_DATABASE_FILE", ("database_file",)),
     ],
 )
 def test_a_missing_setting_stops_the_app(
