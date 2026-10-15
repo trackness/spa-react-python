@@ -60,10 +60,11 @@ def metrics(request: Request) -> Response:
     if names := request.query_params.getlist("name[]"):
         registry = metrics_registry.restricted_registry(names)
     encoder, content_type = choose_encoder(request.headers.get("accept", ""))
+    output = encoder(registry)
     if gzip_accepted(request.headers.get("accept-encoding", "")):
         return Response(
-            gzip.compress(encoder(registry)),
+            gzip.compress(output),
             media_type=content_type,
             headers={"Content-Encoding": "gzip"},
         )
-    return Response(encoder(registry), media_type=content_type)
+    return Response(output, media_type=content_type)

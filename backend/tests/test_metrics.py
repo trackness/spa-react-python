@@ -45,6 +45,15 @@ def test_metrics_are_compressed_when_the_scraper_accepts_gzip() -> None:
     assert response.headers["content-encoding"] == "gzip"
 
 
+def test_metrics_are_uncompressed_when_the_scraper_does_not_accept_gzip() -> None:
+    with TestClient(app) as client:
+        client.get(UNROUTED_PATH)
+        response = client.get("/metrics", headers={"Accept-Encoding": "identity"})
+
+    assert "content-encoding" not in response.headers
+    assert request_counts(samples_in(response.text))
+
+
 def test_metrics_can_be_narrowed_to_the_named_series() -> None:
     with TestClient(app) as client:
         client.get(UNROUTED_PATH)
