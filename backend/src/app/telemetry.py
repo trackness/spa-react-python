@@ -1,9 +1,12 @@
 import tomllib
 
+from opentelemetry.exporter.prometheus import PrometheusMetricReader
 from opentelemetry.instrumentation.logging import LoggingInstrumentor
+from opentelemetry.sdk.metrics import MeterProvider
 from opentelemetry.sdk.resources import SERVICE_NAME, SERVICE_VERSION, Resource
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.sampling import ALWAYS_ON
+from prometheus_client import CollectorRegistry
 from pythonjsonlogger.core import RESERVED_ATTRS
 from pythonjsonlogger.json import JsonFormatter
 
@@ -18,6 +21,20 @@ resource = Resource.create(
     }
 )
 tracer_provider = TracerProvider(sampler=ALWAYS_ON, resource=resource)
+# its own registry leaves out prometheus_client's default collectors
+metrics_registry = CollectorRegistry()
+# adding a reader at runtime resets its totals, so the reader is fixed here
+meter_provider = MeterProvider(
+    metric_readers=[
+        PrometheusMetricReader(
+            resource_attribute_filter=lambda key: (
+                key in {SERVICE_NAME, SERVICE_VERSION}
+            ),
+            registry=metrics_registry,
+        )
+    ],
+    resource=resource,
+)
 LoggingInstrumentor().instrument(
     tracer_provider=tracer_provider,
     inject_trace_context=True,

@@ -3,14 +3,15 @@ from contextlib import asynccontextmanager
 from http import HTTPStatus
 
 from fastapi import FastAPI, Request, Response
+from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
 from sqlalchemy import Engine, text
 from sqlalchemy.exc import DBAPIError
 
 from app.database import database_engine, migrate
 from app.settings import Settings
-from app.telemetry import tracer_provider
+from app.telemetry import meter_provider, metrics_registry, tracer_provider
 
-UNTRACED_PATHS = frozenset({"/health/live", "/health/ready"})
+EXCLUDED_PATHS = frozenset({"/health/live", "/health/ready", "/metrics"})
 
 
 @asynccontextmanager
@@ -26,8 +27,9 @@ app = FastAPI(
     lifespan=lifespan,
     telemetry={
         "tracer_provider": tracer_provider,
+        "meter_provider": meter_provider,
         "auto_configure": False,
-        "exclude": lambda scope: scope["path"] in UNTRACED_PATHS,
+        "exclude": lambda scope: scope["path"] in EXCLUDED_PATHS,
     },
 )
 
@@ -46,3 +48,8 @@ def readiness(request: Request, response: Response) -> dict[str, str]:
         response.status_code = HTTPStatus.SERVICE_UNAVAILABLE
         return {"status": "unavailable"}
     return {"status": "ok"}
+
+
+@app.get("/metrics")
+def metrics() -> Response:
+    return Response(generate_latest(metrics_registry), media_type=CONTENT_TYPE_LATEST)
