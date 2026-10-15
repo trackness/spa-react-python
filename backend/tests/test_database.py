@@ -65,6 +65,9 @@ def failing_migration(versions: Path) -> None:
     (versions / "failing.py").write_text(FAILING_MIGRATION.format(head=head))
 
 
+# Naming and batch mode shape the migrations a developer generates, which no request
+# to the App can show, so these tests generate migrations with Alembic directly.
+# See https://github.com/trackness/spa-react-python/issues/8
 @pytest.fixture
 def widget(versions: Path) -> Iterator[Table]:  # noqa: ARG001
     """Declare tables with every kind of constraint, two of each sharing a column."""
