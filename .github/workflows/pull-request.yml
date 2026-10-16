@@ -30,6 +30,7 @@ jobs:
         run: task format:check
       - name: Type check
         run: task typecheck
+      # builds the Image without publishing it, for the end-to-end tests
       - name: Test
         run: task test
       - name: Client staleness

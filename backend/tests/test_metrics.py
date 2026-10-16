@@ -48,6 +48,13 @@ def test_metrics_answer_a_head_request(client: TestClient) -> None:
     assert client.head("/metrics").status_code == HTTPStatus.OK
 
 
+def test_metrics_refuse_any_other_method(client: TestClient) -> None:
+    response = client.delete("/metrics")
+
+    assert response.status_code == HTTPStatus.METHOD_NOT_ALLOWED
+    assert set(response.headers["Allow"].split(", ")) == {"GET", "HEAD"}
+
+
 def test_metrics_are_compressed_when_the_scraper_accepts_gzip(
     client: TestClient,
 ) -> None:

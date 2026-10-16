@@ -1,3 +1,4 @@
+from collections.abc import Callable
 from http import HTTPStatus
 from pathlib import Path
 from typing import Any
@@ -24,9 +25,22 @@ def test_readiness_reports_the_app_is_ready() -> None:
     assert response.json() == {"status": "ok"}
 
 
-def test_readiness_fails_when_the_database_does_not_answer(database_file: Path) -> None:
+@pytest.mark.parametrize(
+    "damage",
+    [
+        pytest.param(
+            lambda file: file.write_bytes(b"not a database" * 1024), id="broken"
+        ),
+        pytest.param(Path.unlink, id="deleted"),
+        pytest.param(lambda file: file.write_bytes(b""), id="emptied"),
+    ],
+)
+def test_readiness_fails_when_the_database_is_damaged_while_the_app_runs(
+    database_file: Path, damage: Callable[[Path], object]
+) -> None:
     with TestClient(app) as client:
-        database_file.write_bytes(b"not a database" * 1024)
+        assert client.get("/health/ready").status_code == HTTPStatus.OK
+        damage(database_file)
         response = client.get("/health/ready")
 
     assert response.status_code == HTTPStatus.SERVICE_UNAVAILABLE

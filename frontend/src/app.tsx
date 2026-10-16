@@ -5,7 +5,7 @@ import {
 	RouterProvider,
 } from "@tanstack/react-router";
 import { StrictMode, useState } from "react";
-import { ResponseError } from "@/client/.kubb/client";
+import { theAppAnswered } from "@/answer";
 import { routeTree } from "@/routeTree.gen";
 
 // without a history the router follows the browser's address bar
@@ -27,9 +27,9 @@ export function App({ router }: { router: AppRouter }) {
 			new QueryClient({
 				defaultOptions: {
 					queries: {
-						// an error status is the App's answer; only a request that got none is worth repeating
+						// an error status from the App is its answer; only a request it did not answer is worth repeating
 						retry: (failureCount, error) =>
-							!ResponseError.is(error) && failureCount < 3,
+							!theAppAnswered(error) && failureCount < 3,
 					},
 				},
 			}),

@@ -34,6 +34,10 @@ The Python half of a Project, which runs as the App.
 **App**:
 The single running process of a Project, which serves the API and the built Frontend from one origin.
 
+**Image**:
+The one container image a Project ships, holding the Backend and the built Frontend, from which the App runs.
+_Avoid_: Docker image
+
 **Client**:
 The generated TypeScript code through which the Frontend calls the API.
 

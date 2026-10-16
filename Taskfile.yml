@@ -23,23 +23,80 @@ tasks:
 
   lint:
     desc: Lint everything
-    deps: [backend:lint, frontend:lint]
+    deps: [backend:lint, frontend:lint, e2e:lint]
 
   format:
     desc: Format everything
-    deps: [backend:format, frontend:format]
+    deps: [backend:format, frontend:format, e2e:format]
 
   format:check:
     desc: Check that everything is formatted
-    deps: [backend:format:check, frontend:format:check]
+    deps: [backend:format:check, frontend:format:check, e2e:format:check]
 
   typecheck:
     desc: Type check everything
-    deps: [backend:typecheck, frontend:typecheck]
+    deps: [backend:typecheck, frontend:typecheck, e2e:typecheck]
 
   test:
     desc: Run every test
     deps: [backend:test, frontend:test]
+    cmds:
+      # after the other layers: the Backend's tests write migrations the Image's build would copy
+      - task: e2e:test
+
+  image:build:
+    desc: Build the Image, named in compose.yaml
+    cmd: docker compose build
+
+  image:run:
+    desc: Build the Image from the checkout as it is, then run it with its database volume, as compose.yaml does on any Docker host
+    deps: [image:build]
+    cmd: docker compose up
+
+  e2e:test:
+    desc: Run the end-to-end tests against the built Image, on a fresh database
+    deps: [image:build, e2e:browser]
+    env:
+      # its own compose project keeps the volume of image:run untouched; named after the
+      # checkout as compose would name it, which refuses a name it would have to change
+      COMPOSE_PROJECT_NAME: 'e2e-{{regexReplaceAll "[^a-z0-9_-]" (base .ROOT_DIR | lower) ""}}'
+      # Docker picks a free host port
+      HOST_PORT: '0'
+      # IDs no user in the Image has, so that the tests see the App take them
+      PUID: '1234'
+      PGID: '2345'
+    cmds:
+      - defer: docker compose down --volumes
+      # defers run last first, so the App's logs print before down removes it
+      - defer: docker compose logs app
+      - docker compose up --detach --wait
+      # Chrome refuses 0.0.0.0, the address Docker publishes on
+      - address="$(docker compose port app 8000)" && APP_URL="http://127.0.0.1:${address##*:}" pnpm --dir e2e exec playwright test
+
+  e2e:browser:
+    desc: Install the browser the end-to-end tests run in
+    dir: e2e
+    cmd: pnpm exec playwright install --only-shell chromium
+
+  e2e:lint:
+    desc: Lint the end-to-end tests
+    dir: e2e
+    cmd: pnpm exec biome check --formatter-enabled=false --error-on-warnings
+
+  e2e:format:
+    desc: Format the end-to-end tests
+    dir: e2e
+    cmd: pnpm exec biome format --write
+
+  e2e:format:check:
+    desc: Check that the end-to-end tests are formatted
+    dir: e2e
+    cmd: pnpm exec biome format
+
+  e2e:typecheck:
+    desc: Type check the end-to-end tests
+    dir: e2e
+    cmd: pnpm exec tsc
 
   backend:lint:
     desc: Lint the Backend
