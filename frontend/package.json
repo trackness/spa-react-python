@@ -20,7 +20,6 @@
 		"@kubb/plugin-fetch": "^5.5.12",
 		"@kubb/plugin-react-query": "^5.3.4",
 		"@kubb/plugin-ts": "^5.0.11",
-		"@playwright/test": "^1.64.1",
 		"@tanstack/router-plugin": "^1.168.45",
 		"@testing-library/dom": "^10.4.2",
 		"@testing-library/jest-dom": "^7.0.1",

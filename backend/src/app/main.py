@@ -26,6 +26,10 @@ class FrontendFiles(StaticFiles):
     """The built Frontend's files, with index.html for the pages the Frontend routes."""
 
     @override
+    async def check_config(self) -> None:
+        """Serve nothing while unbuilt: in development Vite serves the Frontend."""
+
+    @override
     async def get_response(self, path: str, scope: Scope) -> Response:
         try:
             return await super().get_response(path, scope)
@@ -53,7 +57,6 @@ async def lifespan(_: FastAPI) -> AsyncGenerator[LifespanState]:
     engine = database_engine(settings.database_file)
     yield {
         "engine": engine,
-        # in development Vite serves the Frontend, which is then never built
         "frontend": FrontendFiles(
             directory=settings.frontend_directory, check_dir=False
         ),
@@ -115,10 +118,13 @@ def readiness(request: Request) -> Healthy | JSONResponse:
 app.add_route("/metrics", metrics_endpoint)  # ty: ignore[invalid-argument-type]
 
 
-async def frontend(scope: Scope, receive: Receive, send: Send) -> None:
+class Frontend:
     """Serve the built Frontend, whose directory is known once Settings are read."""
-    await scope["state"]["frontend"](scope, receive, send)
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        await scope["state"]["frontend"](scope, receive, send)
 
 
-# mounted last, so every route above takes priority over it
-app.mount("/", frontend)
+# added last, so every route above takes priority; GET (and so HEAD) only, so
+# that an API path still answers any other method itself
+app.add_route("/{path:path}", Frontend(), methods=["GET"])  # ty: ignore[invalid-argument-type]

@@ -33,11 +33,10 @@ def database_file(tmp_path: Path) -> Path:
 
 @pytest.fixture
 def frontend_directory(tmp_path: Path) -> Path:
-    """A built Frontend: its index.html and one asset."""
+    """A built Frontend: its index.html."""
     directory = tmp_path / "frontend"
-    (directory / "assets").mkdir(parents=True)
+    directory.mkdir()
     (directory / "index.html").write_text("<p>The Frontend</p>")
-    (directory / "assets" / "index.js").write_text("// an asset")
     return directory
 
 

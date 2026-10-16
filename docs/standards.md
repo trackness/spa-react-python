@@ -10,7 +10,7 @@ Never hand-roll anything a strong implementation already does. Good dependencies
 
 - **ty** type checks Python.
 - **ruff** lints and formats Python.
-- **Biome** lints and formats the Frontend.
+- **Biome** lints and formats the Frontend and the end-to-end tests.
 
 ## Python
 

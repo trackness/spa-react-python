@@ -30,8 +30,6 @@ jobs:
         run: task format:check
       - name: Type check
         run: task typecheck
-      - name: Browser for the end-to-end tests
-        run: task frontend:browser -- --with-deps
       # builds the image without publishing it, for the end-to-end tests
       - name: Test
         run: task test
