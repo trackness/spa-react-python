@@ -49,6 +49,9 @@ dist/
 *.local
 *.tsbuildinfo
 
+# Playwright's output from the end-to-end tests
+/frontend/test-results/
+
 # Logs
 *.log
 .pnpm-debug.log*

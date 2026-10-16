@@ -15,3 +15,4 @@ class Settings(BaseSettings):
 
     listen_address: ListenAddress
     database_file: Path
+    frontend_directory: Path

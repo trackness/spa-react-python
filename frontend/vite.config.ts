@@ -18,6 +18,8 @@ export default defineConfig({
 		},
 	},
 	test: {
+		// e2e/ holds the end-to-end tests, which Playwright runs against the image
+		dir: "src",
 		environment: "jsdom",
 		setupFiles: ["./src/test/setup.ts"],
 	},
