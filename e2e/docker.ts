@@ -14,7 +14,8 @@ export function docker(...args: string[]): string {
 	return dockerWith({}, ...args);
 }
 
-// runs the Image with `runArgs`, such as --env options, and expects it to report itself healthy
+// starts the App from the Image with `runArgs`, such as --env options, and fails unless
+// the Image's healthcheck passes in time
 export async function expectHealthy(...runArgs: string[]): Promise<void> {
 	const container = docker("run", "--detach", ...runArgs, image());
 	try {

@@ -2,6 +2,7 @@
 *
 !Taskfile.yml
 !version.txt
+!entrypoint.sh
 !frontend
 !backend/.python-version
 !backend/logging.json

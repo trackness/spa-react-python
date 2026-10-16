@@ -28,7 +28,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 COPY version.txt /app/
 COPY backend .
 RUN --mount=type=cache,target=/root/.cache/uv uv sync --locked
-# uv compiles the dependencies only; the App cannot write its own bytecode as it runs
+# uv compiles the dependencies only; the App cannot write the Backend's bytecode as it runs
 RUN python -m compileall -q src
 
 FROM python:3.14.8-slim-trixie
@@ -42,10 +42,8 @@ ENV APP_LISTEN_ADDRESS__HOST=0.0.0.0 \
 # writable by whichever user Docker runs the App as, which cannot create it in / itself
 RUN mkdir --mode=1777 "$(dirname "$APP_DATABASE_FILE")"
 EXPOSE 8000
-# root only long enough to give the database's directory and files to PUID:PGID, then the App runs as
-# them; an unset or empty ID means 1000. Started as another user (docker run --user), the
-# App runs as that user.
-ENTRYPOINT ["sh", "-c", "[ \"$(id -u)\" = 0 ] || exec \"$@\"; : \"${PUID:=1000}\" \"${PGID:=1000}\" && database=\"$(dirname \"$APP_DATABASE_FILE\")\" && mkdir -p \"$database\" && touch \"$APP_DATABASE_FILE\" && chown \"$PUID:$PGID\" \"$database\" \"$APP_DATABASE_FILE\"* && exec setpriv --reuid=\"$PUID\" --regid=\"$PGID\" --clear-groups -- \"$@\"", "entrypoint"]
+COPY --chmod=0755 entrypoint.sh /usr/local/bin/entrypoint
+ENTRYPOINT ["entrypoint"]
 # readiness fails until migrations have run; the start period gives them time
 HEALTHCHECK --start-period=1m \
     CMD ["python", "-c", "import http.client, os, sys; app = http.client.HTTPConnection(os.environ['APP_LISTEN_ADDRESS__HOST'], int(os.environ['APP_LISTEN_ADDRESS__PORT'])); app.request('GET', '/health/ready'); sys.exit(app.getresponse().status != 200)"]

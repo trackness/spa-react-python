@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 import { inContainer } from "./docker";
 import { checkoutFiles } from "./git";
 
-test("the Image runs the App without Node", () => {
+test("the Image carries no Node", () => {
 	expect(inContainer("find / -xdev -type f -name node")).toBe("");
 });
 

@@ -7,15 +7,34 @@ import {
 	inContainer,
 } from "./docker";
 
-test("the Image runs the App as the PUID and PGID it is given", () => {
-	// the App is process 1, since the Image execs it
+test("the App runs as the PUID and PGID its container is given", () => {
+	// the App is process 1, since the Image's entrypoint execs it
 	expect(inContainer("stat -c %u:%g /proc/1")).toBe(
 		`${process.env.PUID}:${process.env.PGID}`,
 	);
 });
 
-test("the App runs unprivileged when the Image is given no PUID or PGID", () => {
+test("the App runs unprivileged when its container is given no PUID or PGID", () => {
 	expect(docker("run", "--rm", image(), "id", "-u")).not.toBe("0");
+});
+
+test("the App runs as 1000 when its container's PUID and PGID are empty", () => {
+	expect(
+		docker(
+			"run",
+			"--rm",
+			"--env",
+			"PUID=",
+			"--env",
+			"PGID=",
+			image(),
+			"stat",
+			"-L",
+			"-c",
+			"%u:%g",
+			"/proc/self",
+		),
+	).toBe("1000:1000");
 });
 
 test("the App runs as the user Docker starts the Image as, when that is not root", async () => {
