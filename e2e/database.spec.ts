@@ -40,31 +40,52 @@ test("the App keeps its database wherever APP_DATABASE_FILE puts it", async () =
 	);
 });
 
-test("the App keeps writing its database after PUID and PGID change", () => {
-	// a volume of its own, so that the running App's database is left alone
-	const volume = docker("volume", "create");
-	const writeAs = (id: string) =>
+test("the Image gives the App its database's files and nothing else in their directory", () => {
+	expect(
 		docker(
 			"run",
 			"--rm",
 			"--env",
-			`PUID=${id}`,
-			"--env",
-			`PGID=${id}`,
-			"--volume",
-			`${volume}:/data`,
+			"APP_DATABASE_FILE=/app.db",
 			image(),
-			"python",
+			"stat",
 			"-c",
-			onDatabase(
-				`database.execute('CREATE TABLE written_by_${id} (id INTEGER)')`,
-			),
-		);
-	try {
-		writeAs("1111");
-
-		expect(() => writeAs("2222")).not.toThrow();
-	} finally {
-		docker("volume", "rm", volume);
-	}
+			"%u",
+			"/usr",
+		),
+	).toBe("0");
 });
+
+// the Image's own database, and one whose name holds a pattern's wildcards
+for (const database of ["/data/app.db", "/data/app[1].db"]) {
+	test(`the App keeps writing ${database} after PUID and PGID change`, () => {
+		// a volume of its own, so that the running App's database is left alone
+		const volume = docker("volume", "create");
+		const writeAs = (id: string) =>
+			docker(
+				"run",
+				"--rm",
+				"--env",
+				`PUID=${id}`,
+				"--env",
+				`PGID=${id}`,
+				"--env",
+				`APP_DATABASE_FILE=${database}`,
+				"--volume",
+				`${volume}:/data`,
+				image(),
+				"python",
+				"-c",
+				onDatabase(
+					`database.execute('CREATE TABLE written_by_${id} (id INTEGER)')`,
+				),
+			);
+		try {
+			writeAs("1111");
+
+			expect(() => writeAs("2222")).not.toThrow();
+		} finally {
+			docker("volume", "rm", volume);
+		}
+	});
+}

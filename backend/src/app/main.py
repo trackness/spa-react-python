@@ -136,8 +136,9 @@ def readiness(request: Request) -> Healthy | JSONResponse:
 app.add_route("/metrics", metrics_endpoint, methods=["GET"])  # ty: ignore[invalid-argument-type]
 
 
-async def frontend(scope: Scope, receive: Receive, send: Send) -> None:
-    """Serve the built Frontend, whose directory is known once Settings are read."""
+async def fallback(scope: Scope, receive: Receive, send: Send) -> None:
+    """Serve the built Frontend, whose directory is known once Settings are read, to a
+    GET or HEAD request, and answer anything else as not found."""
     if scope["type"] == "http" and scope["method"] in {"GET", "HEAD"}:
         await scope["state"]["frontend"](scope, receive, send)
     else:
@@ -145,4 +146,4 @@ async def frontend(scope: Scope, receive: Receive, send: Send) -> None:
 
 
 # what the router answers once no route, method or trailing-slash redirect applies
-app.router.default = frontend
+app.router.default = fallback

@@ -17,10 +17,19 @@ export function checkoutFiles(): string[] {
 	return (
 		execFileSync(
 			"git",
-			["-C", "..", "ls-files", "--cached", "--others", "--exclude-standard"],
+			[
+				"-C",
+				"..",
+				"ls-files",
+				"-z",
+				"--cached",
+				"--others",
+				"--exclude-standard",
+			],
 			{ encoding: "utf8" },
 		)
-			.split("\n")
+			// -z lists each path as it is, where git otherwise quotes one with unusual characters
+			.split("\0")
 			// git still lists a committed file the checkout has deleted
 			.filter((file) => file && existsSync(join("..", file)))
 	);
