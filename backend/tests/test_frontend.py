@@ -21,6 +21,15 @@ def test_a_browser_navigating_to_the_app_gets_the_frontend() -> None:
     assert response.text == "<p>The Frontend</p>"
 
 
+def test_any_request_for_the_root_gets_the_frontend_index() -> None:
+    with TestClient(app) as client:
+        response = client.get("/")
+
+    assert response.status_code == HTTPStatus.OK
+    assert response.text == "<p>The Frontend</p>"
+    assert response.headers["Cache-Control"] == "no-cache"
+
+
 def test_a_browser_navigating_to_a_page_gets_the_frontend() -> None:
     with TestClient(app) as client:
         response = client.get("/settings", headers=NAVIGATION)
@@ -29,9 +38,9 @@ def test_a_browser_navigating_to_a_page_gets_the_frontend() -> None:
     assert response.text == "<p>The Frontend</p>"
 
 
-def test_the_frontend_is_revalidated_so_a_new_release_reaches_the_browser() -> None:
+def test_a_page_is_revalidated_so_a_new_release_reaches_the_browser() -> None:
     with TestClient(app) as client:
-        response = client.get("/", headers=NAVIGATION)
+        response = client.get("/settings", headers=NAVIGATION)
 
     assert response.headers["Cache-Control"] == "no-cache"
 
@@ -64,6 +73,51 @@ def test_an_api_path_still_rejects_a_method_it_does_not_serve() -> None:
 
     assert response.status_code == HTTPStatus.METHOD_NOT_ALLOWED
     assert response.headers["Allow"] == "GET"
+
+
+def test_an_api_path_still_rejects_head_it_does_not_serve() -> None:
+    with TestClient(app) as client:
+        response = client.head("/health/live")
+
+    assert response.status_code == HTTPStatus.METHOD_NOT_ALLOWED
+    assert response.headers["Allow"] == "GET"
+
+
+def test_an_api_path_with_a_trailing_slash_redirects_to_it() -> None:
+    with TestClient(app, follow_redirects=False) as client:
+        response = client.get("/health/live/", headers=NAVIGATION)
+
+    assert response.status_code == HTTPStatus.TEMPORARY_REDIRECT
+    assert response.headers["Location"].endswith("/health/live")
+
+
+def test_another_method_on_an_unknown_path_is_not_found() -> None:
+    with TestClient(app) as client:
+        response = client.post("/nothing-here")
+
+    assert response.status_code == HTTPStatus.NOT_FOUND
+    assert response.json() == {"detail": "Not Found"}
+
+
+def test_a_request_that_refuses_html_gets_no_page() -> None:
+    with TestClient(app) as client:
+        response = client.get(
+            "/settings", headers={"Accept": "text/html;q=0, application/json"}
+        )
+
+    assert response.status_code == HTTPStatus.NOT_FOUND
+
+
+def test_a_browser_navigating_to_a_page_gets_the_frontend_despite_a_404_page(
+    frontend_directory: Path,
+) -> None:
+    (frontend_directory / "404.html").write_text("<p>Not here</p>")
+
+    with TestClient(app) as client:
+        response = client.get("/settings", headers=NAVIGATION)
+
+    assert response.status_code == HTTPStatus.OK
+    assert response.text == "<p>The Frontend</p>"
 
 
 def test_a_missing_asset_is_not_found() -> None:

@@ -33,6 +33,30 @@ def test_readiness_fails_when_the_database_does_not_answer(database_file: Path) 
     assert response.json() == {"status": "unavailable"}
 
 
+def test_readiness_fails_when_the_database_breaks_while_the_app_runs(
+    database_file: Path,
+) -> None:
+    with TestClient(app) as client:
+        client.get("/health/ready")
+        database_file.write_bytes(b"not a database" * 1024)
+        response = client.get("/health/ready")
+
+    assert response.status_code == HTTPStatus.SERVICE_UNAVAILABLE
+    assert response.json() == {"status": "unavailable"}
+
+
+def test_readiness_fails_when_the_database_is_deleted_while_the_app_runs(
+    database_file: Path,
+) -> None:
+    with TestClient(app) as client:
+        client.get("/health/ready")
+        database_file.unlink()
+        response = client.get("/health/ready")
+
+    assert response.status_code == HTTPStatus.SERVICE_UNAVAILABLE
+    assert response.json() == {"status": "unavailable"}
+
+
 @pytest.fixture
 def openapi() -> dict[str, Any]:
     with TestClient(app) as client:

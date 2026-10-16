@@ -1,4 +1,4 @@
-# only what the image is built from, so a checkout's local files stay out
+# only what the Image is built from, so a checkout's local files stay out
 *
 !Taskfile.yml
 !version.txt

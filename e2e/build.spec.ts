@@ -1,26 +1,15 @@
-import {
-	cpSync,
-	mkdirSync,
-	mkdtempSync,
-	readFileSync,
-	rmSync,
-	writeFileSync,
-} from "node:fs";
-import { tmpdir } from "node:os";
+import { mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { expect, test } from "@playwright/test";
 import { docker } from "./docker";
-import { checkoutFiles } from "./git";
+import { copyCheckout } from "./git";
 
 const TAG = `${process.env.COMPOSE_PROJECT_NAME}-frontend-stage`;
 
-// builds the Frontend's image stage from a copy of the checkout, changed first by `change`
+// builds the Image's Frontend stage from a copy of the checkout, changed first by `change`
 function buildFrontendStage(change: (checkout: string) => void): void {
-	const checkout = mkdtempSync(join(tmpdir(), "checkout-"));
+	const checkout = copyCheckout();
 	try {
-		for (const file of checkoutFiles()) {
-			cpSync(join("..", file), join(checkout, file), { recursive: true });
-		}
 		change(checkout);
 		docker("build", "--target", "frontend", "--tag", TAG, checkout);
 	} finally {
@@ -28,14 +17,14 @@ function buildFrontendStage(change: (checkout: string) => void): void {
 	}
 }
 
-// each test builds the Frontend's image stage
+// each test builds the Image's Frontend stage
 test.describe.configure({ timeout: 300_000 });
 
 test.afterEach(() => {
 	docker("image", "rm", "--force", TAG);
 });
 
-test("the image is built from a checkout's files, never the ones git ignores", () => {
+test("the Image is built from a checkout's files, never the ones git ignores", () => {
 	// files git ignores: Vite reads a local env file, and copies its public directory whole
 	const ignored = [
 		".DS_Store",
@@ -68,7 +57,7 @@ test("the image is built from a checkout's files, never the ones git ignores", (
 	).toBe("");
 });
 
-test("the image builds the Frontend from every file the checkout keeps", () => {
+test("the Image builds the Frontend from every file the checkout keeps", () => {
 	buildFrontendStage((checkout) => {
 		// Vite copies its public directory into the build as it is
 		mkdirSync(join(checkout, "frontend/public"));
@@ -85,7 +74,24 @@ test("the image builds the Frontend from every file the checkout keeps", () => {
 	);
 });
 
-test("the image is not built from a Frontend whose lockfile its manifest has outgrown", () => {
+test("the Image's build stops at a download that fails", () => {
+	// no network, and no cached layers to stand in for the downloads
+	expect(() =>
+		docker(
+			"build",
+			"--no-cache",
+			"--network",
+			"none",
+			"--target",
+			"frontend",
+			"--tag",
+			TAG,
+			"..",
+		),
+	).toThrow(/process "[^"]*install\.sh[^"]*" did not complete successfully/);
+});
+
+test("the Image is not built from a Frontend whose lockfile its manifest has outgrown", () => {
 	expect(() =>
 		buildFrontendStage((checkout) => {
 			const manifest = join(checkout, "frontend/package.json");

@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { ResponseError } from "@/client/.kubb/client";
+import { isUnavailable, theAppAnswered } from "@/answer";
 import { readinessQueryOptions } from "@/client/hooks";
 
 export const Route = createFileRoute("/")({ component: HomePage });
@@ -8,16 +8,21 @@ export const Route = createFileRoute("/")({ component: HomePage });
 function HomePage() {
 	const readiness = useQuery(readinessQueryOptions());
 
-	if (readiness.isPending) {
-		return <p>Checking whether the App is ready…</p>;
+	function message(): string {
+		if (readiness.isPending) {
+			return "Checking whether the App is ready…";
+		}
+		if (!readiness.isError) {
+			return "The App is ready.";
+		}
+		if (!theAppAnswered(readiness.error)) {
+			return "The App did not answer.";
+		}
+		return isUnavailable(readiness.error.data)
+			? `The App is not ready: ${readiness.error.data.status}.`
+			: `The App is not ready: it answered with status ${readiness.error.status}.`;
 	}
-	if (readiness.isError) {
-		// a request that never got an answer rejects with something other than a ResponseError
-		return ResponseError.is(readiness.error) ? (
-			<p>{`The App is not ready: ${readiness.error.data.status}.`}</p>
-		) : (
-			<p>The App did not answer.</p>
-		);
-	}
-	return <p>The App is ready.</p>;
+
+	// one live region whose text changes, so that screen readers announce what the page finds
+	return <p role="status">{message()}</p>;
 }

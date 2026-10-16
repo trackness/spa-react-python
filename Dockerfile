@@ -1,5 +1,8 @@
 FROM ghcr.io/pnpm/pnpm:12.11.2 AS frontend
-RUN sh -c "$(curl --location https://taskfile.dev/install.sh)" -- -d -b /usr/local/bin v3.54.0
+# Task's latest release, unpinned as CI's setup-task (the latest 3.x) is; the Taskfile's
+# version: '3' is the contract; pipefail, so that a failed download stops the build here
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+RUN curl --fail --silent --show-error --location https://taskfile.dev/install.sh | sh -s -- -d -b /usr/local/bin
 WORKDIR /app
 # the dependencies first, exactly as locked, so that a change to the Frontend's code reuses them
 COPY frontend/package.json frontend/pnpm-lock.yaml frontend/
@@ -8,9 +11,12 @@ COPY Taskfile.yml .
 COPY frontend frontend
 RUN task frontend:build
 
+# a stage of its own, so that Dependabot, which reads only FROM lines, keeps uv updated
+FROM ghcr.io/astral-sh/uv:0.13.1 AS uv
+
 FROM python:3.14.8-slim-trixie AS backend
-COPY --from=ghcr.io/astral-sh/uv:0.13.1 /uv /bin/
-# the image's own Python, so the environment still works once copied out of this stage
+COPY --from=uv /uv /bin/
+# the base image's own Python, so the environment still works once copied out of this stage
 ENV UV_NO_DEV=1 UV_PYTHON_DOWNLOADS=0 UV_COMPILE_BYTECODE=1 UV_LINK_MODE=copy
 WORKDIR /app/backend
 # the dependencies first, so that a change to the Backend's code reuses them
@@ -22,6 +28,8 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 COPY version.txt /app/
 COPY backend .
 RUN --mount=type=cache,target=/root/.cache/uv uv sync --locked
+# uv compiles the dependencies only; the App cannot write its own bytecode as it runs
+RUN python -m compileall -q src
 
 FROM python:3.14.8-slim-trixie
 COPY --from=backend /app /app
@@ -31,9 +39,11 @@ ENV APP_LISTEN_ADDRESS__HOST=0.0.0.0 \
     APP_LISTEN_ADDRESS__PORT=8000 \
     APP_DATABASE_FILE=/data/app.db \
     APP_FRONTEND_DIRECTORY=/app/frontend/dist
-# root only long enough to give the database directory to PUID:PGID, then the App runs as
-# them; an unset or empty ID, as compose passes one it was not given, means 1000
-ENTRYPOINT ["sh", "-c", ": \"${PUID:=1000}\" \"${PGID:=1000}\" && mkdir -p /data && chown -R \"$PUID:$PGID\" /data && exec setpriv --reuid=\"$PUID\" --regid=\"$PGID\" --clear-groups -- \"$@\"", "entrypoint"]
+EXPOSE 8000
+# root only long enough to give the database's directory to PUID:PGID, then the App runs as
+# them; an unset or empty ID, as compose passes one it was not given, means 1000. Started as
+# another user (docker run --user), the App runs as that user.
+ENTRYPOINT ["sh", "-c", "[ \"$(id -u)\" = 0 ] || exec \"$@\"; : \"${PUID:=1000}\" \"${PGID:=1000}\" && database=\"$(dirname \"$APP_DATABASE_FILE\")\" && mkdir -p \"$database\" && chown -R \"$PUID:$PGID\" \"$database\" && exec setpriv --reuid=\"$PUID\" --regid=\"$PGID\" --clear-groups -- \"$@\"", "entrypoint"]
 # readiness fails until migrations have run; the start period gives them time
 HEALTHCHECK --start-period=1m \
     CMD ["python", "-c", "import http.client, os, sys; app = http.client.HTTPConnection(os.environ['APP_LISTEN_ADDRESS__HOST'], int(os.environ['APP_LISTEN_ADDRESS__PORT'])); app.request('GET', '/health/ready'); sys.exit(app.getresponse().status != 200)"]

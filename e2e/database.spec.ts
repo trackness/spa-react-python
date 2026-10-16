@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { docker, image } from "./docker";
+import { docker, expectHealthy, image } from "./docker";
 
 // Python run in a container, with the App's database open as `database`
 function onDatabase(python: string): string {
@@ -31,6 +31,13 @@ test("the database outlives the container, on the compose file's volume", () => 
 	);
 
 	expect(tables).toContain("outlives");
+});
+
+test("the App keeps its database wherever APP_DATABASE_FILE puts it", async () => {
+	await expectHealthy(
+		"--env",
+		"APP_DATABASE_FILE=/var/lib/app/database/app.db",
+	);
 });
 
 test("the App keeps writing its database after PUID and PGID change", () => {

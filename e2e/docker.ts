@@ -1,8 +1,34 @@
 import { execFileSync } from "node:child_process";
+import { expect } from "@playwright/test";
 
-// the e2e:test task names the compose project the image runs in
+// docker run in `cwd` with `env`, rather than in e2e/ with the e2e:test task's environment
+export function dockerWith(
+	options: { cwd?: string; env?: NodeJS.ProcessEnv },
+	...args: string[]
+): string {
+	return execFileSync("docker", args, { ...options, encoding: "utf8" }).trim();
+}
+
+// the e2e:test task names the compose project the Image runs in
 export function docker(...args: string[]): string {
-	return execFileSync("docker", args, { encoding: "utf8" }).trim();
+	return dockerWith({}, ...args);
+}
+
+// runs the Image with `runArgs`, such as --env options, and expects it to report itself healthy
+export async function expectHealthy(...runArgs: string[]): Promise<void> {
+	const container = docker("run", "--detach", ...runArgs, image());
+	try {
+		await expect
+			.poll(
+				() =>
+					docker("inspect", "--format", "{{.State.Health.Status}}", container),
+				// from Docker Engine 25, the start period checks every 5 seconds
+				{ timeout: 20_000 },
+			)
+			.toBe("healthy");
+	} finally {
+		docker("rm", "--force", container);
+	}
 }
 
 export function image(): string {
