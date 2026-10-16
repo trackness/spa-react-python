@@ -34,15 +34,13 @@ class FrontendFiles(StaticFiles):
 
     @override
     async def get_response(self, path: str, scope: Scope) -> Response:
-        # the root, normalized to ".", is the index; Starlette's html mode would also
-        # serve a build's 404.html in place of the fallback below
+        # the root, normalized to ".", is the index
         if path == ".":
             path = self.INDEX
         try:
             return await super().get_response(path, scope)
         except HTTPException:
-            # FastAPI's own test, as its frontend serving uses: a browser navigates
-            # accepting HTML, so a missing asset stays a 404
+            # a browser navigates accepting HTML, so a missing asset stays a 404
             if not _is_frontend_navigation_request(scope):
                 raise
             return await super().get_response(self.INDEX, scope)
@@ -122,8 +120,8 @@ def liveness() -> Healthy:
 def readiness(request: Request) -> Healthy | JSONResponse:
     database = request.state.database_file.resolve().as_uri()
     try:
-        # a connection of its own reads the file afresh, which a pooled one does not;
-        # mode=rw never creates a file that has gone
+        # a connection of its own reads the file afresh; mode=rw never creates a file
+        # that has gone
         with closing(sqlite3.connect(f"{database}?mode=rw", uri=True)) as probe:
             probe.execute("PRAGMA schema_version")
     except sqlite3.DatabaseError:

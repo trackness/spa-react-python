@@ -10,7 +10,7 @@ test("the Image carries the Backend as the checkout has it, with none of the fil
 	const kept = checkoutFiles().filter(
 		(file) => file.startsWith("backend/") && !file.startsWith("backend/tests/"),
 	);
-	// the virtual environment is built in the Image, and Python writes bytecode as it runs
+	// the virtual environment and the bytecode are built in the Image
 	const shipped = inContainer(
 		"cd /app && find backend -path backend/.venv -prune -o -name __pycache__ -prune -o -type f -print",
 	).split("\n");

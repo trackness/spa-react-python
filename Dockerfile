@@ -1,6 +1,6 @@
 FROM ghcr.io/pnpm/pnpm:12.11.2 AS frontend
-# Task's latest release, unpinned as CI's setup-task (the latest 3.x) is; the Taskfile's
-# version: '3' is the contract; pipefail, so that a failed download stops the build here
+# Task's latest release, which runs any Taskfile of version: '3'; pipefail, so that a
+# failed download stops the build here
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 RUN curl --fail --silent --show-error --location https://taskfile.dev/install.sh | sh -s -- -d -b /usr/local/bin
 WORKDIR /app
@@ -39,10 +39,12 @@ ENV APP_LISTEN_ADDRESS__HOST=0.0.0.0 \
     APP_LISTEN_ADDRESS__PORT=8000 \
     APP_DATABASE_FILE=/data/app.db \
     APP_FRONTEND_DIRECTORY=/app/frontend/dist
+# writable by whichever user Docker starts the Image as, which cannot create it in / itself
+RUN mkdir --mode=1777 "$(dirname "$APP_DATABASE_FILE")"
 EXPOSE 8000
 # root only long enough to give the database's directory to PUID:PGID, then the App runs as
-# them; an unset or empty ID, as compose passes one it was not given, means 1000. Started as
-# another user (docker run --user), the App runs as that user.
+# them; an unset or empty ID means 1000. Started as another user (docker run --user), the
+# App runs as that user.
 ENTRYPOINT ["sh", "-c", "[ \"$(id -u)\" = 0 ] || exec \"$@\"; : \"${PUID:=1000}\" \"${PGID:=1000}\" && database=\"$(dirname \"$APP_DATABASE_FILE\")\" && mkdir -p \"$database\" && chown -R \"$PUID:$PGID\" \"$database\" && exec setpriv --reuid=\"$PUID\" --regid=\"$PGID\" --clear-groups -- \"$@\"", "entrypoint"]
 # readiness fails until migrations have run; the start period gives them time
 HEALTHCHECK --start-period=1m \

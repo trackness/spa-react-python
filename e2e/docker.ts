@@ -1,7 +1,7 @@
 import { execFileSync } from "node:child_process";
 import { expect } from "@playwright/test";
 
-// docker run in `cwd` with `env`, rather than in e2e/ with the e2e:test task's environment
+// docker in another `cwd` or with another `env` than the e2e:test task's
 export function dockerWith(
 	options: { cwd?: string; env?: NodeJS.ProcessEnv },
 	...args: string[]
