@@ -24,7 +24,7 @@ test.afterEach(() => {
 	docker("image", "rm", "--force", TAG);
 });
 
-test("the Image is built from a checkout's files, never the ones git ignores", () => {
+test("the Image's Frontend stage is built from a checkout's files, never the ones git ignores", () => {
 	// files git ignores: Vite reads a local env file, and copies its public directory whole
 	const ignored = [
 		".DS_Store",
@@ -57,7 +57,7 @@ test("the Image is built from a checkout's files, never the ones git ignores", (
 	).toBe("");
 });
 
-test("the Image builds the Frontend from every file the checkout keeps", () => {
+test("the Image's Frontend stage builds the Frontend from every file the checkout keeps", () => {
 	buildFrontendStage((checkout) => {
 		// Vite copies its public directory into the build as it is
 		mkdirSync(join(checkout, "frontend/public"));
@@ -74,7 +74,7 @@ test("the Image builds the Frontend from every file the checkout keeps", () => {
 	);
 });
 
-test("the Image's build stops at a download that fails", () => {
+test("the Image's Frontend stage stops at a download that fails", () => {
 	// no network, and no cached layers to stand in for the downloads
 	expect(() =>
 		docker(
@@ -91,7 +91,7 @@ test("the Image's build stops at a download that fails", () => {
 	).toThrow(/process "[^"]*install\.sh[^"]*" did not complete successfully/);
 });
 
-test("the Image is not built from a Frontend whose lockfile its manifest has outgrown", () => {
+test("the Image's Frontend stage is not built from a Frontend whose lockfile its manifest has outgrown", () => {
 	expect(() =>
 		buildFrontendStage((checkout) => {
 			const manifest = join(checkout, "frontend/package.json");

@@ -9,4 +9,5 @@ The Image's entrypoint runs as root only long enough to give the database's dire
 ## Consequences
 
 - The App owns the database's directory, so the entrypoint, started as root, changes a link there itself, never the file it points to, and refuses to start unless the database's path names a file, in an absolute directory other than `/` reached with no link, `.`, `..` or repeated `/`.
+- The entrypoint, started as root, creates the database's directory if it is missing. The Image creates its default `/data` writable by any user, so a `docker run --user` App can create its database there; any other directory must already exist and be writable by that user.
 - Under a `docker run --user` other than root or an earlier run's PUID, the App cannot write the database files that run left, since nothing re-owns them.

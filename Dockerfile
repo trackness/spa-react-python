@@ -28,8 +28,9 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 COPY version.txt /app/
 COPY backend .
 RUN --mount=type=cache,target=/root/.cache/uv uv sync --locked
-# uv compiles the dependencies only; the App cannot write the Backend's bytecode as it runs
-RUN python -m compileall -q src
+# uv compiles the dependencies only, and the App cannot write the bytecode of the Backend or
+# its migrations as it runs
+RUN python -m compileall -q src migrations
 
 FROM python:3.14.8-slim-trixie
 COPY --from=backend /app /app
