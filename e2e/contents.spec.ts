@@ -6,7 +6,7 @@ test("the Image runs the App without Node", () => {
 	expect(inContainer("find / -xdev -type f -name node")).toBe("");
 });
 
-test("the Image carries the Backend as the checkout has it, with none of the files git ignores", () => {
+test("the Image carries the Backend, but for its tests, as the checkout has it, with none of the files git ignores", () => {
 	const kept = checkoutFiles().filter(
 		(file) => file.startsWith("backend/") && !file.startsWith("backend/tests/"),
 	);
@@ -18,7 +18,7 @@ test("the Image carries the Backend as the checkout has it, with none of the fil
 	expect(shipped.sort()).toEqual(kept.sort());
 });
 
-test("the Image carries the App's bytecode, which the App cannot write as it runs", () => {
+test("the Image carries the Backend's bytecode, which the App cannot write as it runs", () => {
 	expect(inContainer("find /app/backend/src -name '*.pyc'")).not.toBe("");
 });
 

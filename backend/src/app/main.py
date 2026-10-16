@@ -55,7 +55,7 @@ class FrontendFiles(StaticFiles):
     ) -> Response:
         response = super().file_response(full_path, stat_result, scope, status_code)
         if Path(full_path).name == self.INDEX:
-            # it names the assets of one release, so a cached copy outlives them
+            # it names the assets of one build, so a cached copy outlives them
             response.headers["Cache-Control"] = "no-cache"
         return response
 
@@ -123,8 +123,11 @@ def readiness(request: Request) -> Healthy | JSONResponse:
         # a connection of its own reads the file afresh; mode=rw never creates a file
         # that has gone
         with closing(sqlite3.connect(f"{database}?mode=rw", uri=True)) as probe:
-            probe.execute("PRAGMA schema_version")
+            [schema_version] = probe.execute("PRAGMA schema_version").fetchone()
     except sqlite3.DatabaseError:
+        schema_version = 0
+    # an emptied file is a database with no schema, which migrations always leave one of
+    if not schema_version:
         return JSONResponse(
             Unavailable(status="unavailable").model_dump(),
             status_code=HTTPStatus.SERVICE_UNAVAILABLE,

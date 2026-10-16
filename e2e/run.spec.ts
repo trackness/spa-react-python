@@ -10,7 +10,7 @@ test("image:run runs the checkout as it is now, not an Image built before a chan
 	test.setTimeout(300_000);
 	const checkout = copyCheckout();
 	const name = `${process.env.COMPOSE_PROJECT_NAME}-image-run`;
-	// a project and image of its own, so that the other tests' Image is left alone
+	// a compose project and a build of the Image of its own, so that the other tests' build is left alone
 	const compose = join(checkout, "compose.yaml");
 	writeFileSync(
 		compose,

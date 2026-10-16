@@ -39,7 +39,7 @@ ENV APP_LISTEN_ADDRESS__HOST=0.0.0.0 \
     APP_LISTEN_ADDRESS__PORT=8000 \
     APP_DATABASE_FILE=/data/app.db \
     APP_FRONTEND_DIRECTORY=/app/frontend/dist
-# writable by whichever user Docker starts the Image as, which cannot create it in / itself
+# writable by whichever user Docker runs the App as, which cannot create it in / itself
 RUN mkdir --mode=1777 "$(dirname "$APP_DATABASE_FILE")"
 EXPOSE 8000
 # root only long enough to give the database's directory and files to PUID:PGID, then the App runs as

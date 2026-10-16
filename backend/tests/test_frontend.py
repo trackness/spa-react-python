@@ -30,7 +30,7 @@ def test_a_browser_navigating_to_a_page_gets_the_frontend() -> None:
     assert response.text == "<p>The Frontend</p>"
 
 
-def test_a_page_is_revalidated_so_a_new_release_reaches_the_browser() -> None:
+def test_a_page_is_revalidated_so_a_new_build_reaches_the_browser() -> None:
     with TestClient(app) as client:
         response = client.get("/settings", headers=NAVIGATION_HEADERS)
 

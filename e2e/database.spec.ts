@@ -6,7 +6,7 @@ function onDatabase(python: string): string {
 	return `import os, sqlite3; database = sqlite3.connect(os.environ['APP_DATABASE_FILE']); ${python}`;
 }
 
-test("the database outlives the container, on the compose file's volume", () => {
+test("the database outlives the container, on compose.yaml's volume", () => {
 	docker(
 		"compose",
 		"exec",

@@ -9,7 +9,7 @@ export function dockerWith(
 	return execFileSync("docker", args, { ...options, encoding: "utf8" }).trim();
 }
 
-// the e2e:test task names the compose project the Image runs in
+// the e2e:test task names the compose project the App runs in
 export function docker(...args: string[]): string {
 	return dockerWith({}, ...args);
 }
