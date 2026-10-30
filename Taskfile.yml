@@ -1,0 +1,195 @@
+version: '3'
+
+env:
+  KUBB_DISABLE_TELEMETRY: '1'
+
+tasks:
+  run:
+    desc: Start the App, restarting it whenever the Backend's code changes
+    dir: backend
+    dotenv: ['../.env', '../.env.example']
+    cmd: >-
+      uv run --locked uvicorn app.main:app --reload --reload-dir src
+      --log-config logging.json --host "$APP_LISTEN_ADDRESS__HOST" --port "$APP_LISTEN_ADDRESS__PORT"
+
+  dev:
+    desc: Start the App and Vite, both reloading on change, with Vite proxying API requests to the App
+    deps: [run, frontend:dev]
+
+  install-hooks:
+    desc: Install the commit hooks into this clone's own hooks directory
+    dir: backend
+    cmd: uv run --locked prek install --force
+
+  lint:
+    desc: Lint everything
+    deps: [backend:lint, frontend:lint, e2e:lint]
+
+  format:
+    desc: Format everything
+    deps: [backend:format, frontend:format, e2e:format]
+
+  format:check:
+    desc: Check that everything is formatted
+    deps: [backend:format:check, frontend:format:check, e2e:format:check]
+
+  typecheck:
+    desc: Type check everything
+    deps: [backend:typecheck, frontend:typecheck, e2e:typecheck]
+
+  test:
+    desc: Run every test
+    deps: [backend:test, frontend:test]
+    cmds:
+      # after the other layers: the Backend's tests write migrations the Image's build would copy
+      - task: e2e:test
+
+  image:build:
+    desc: Build the Image, named in compose.yaml
+    cmd: docker compose build
+
+  image:run:
+    desc: Build the Image from the checkout as it is, then run it with its database volume, as compose.yaml does on any Docker host
+    deps: [image:build]
+    cmd: docker compose up
+
+  e2e:test:
+    desc: Run the end-to-end tests against the built Image, on a fresh database
+    deps: [image:build, e2e:browser]
+    env:
+      # its own compose project keeps the volume of image:run untouched; named after the
+      # checkout as compose would name it, which refuses a name it would have to change
+      COMPOSE_PROJECT_NAME: 'e2e-{{regexReplaceAll "[^a-z0-9_-]" (base .ROOT_DIR | lower) ""}}'
+      # Docker picks a free host port
+      HOST_PORT: '0'
+      # IDs no user in the Image has, so that the tests see the App take them
+      PUID: '1234'
+      PGID: '2345'
+    cmds:
+      - defer: docker compose down --volumes
+      # defers run last first, so the App's logs print before down removes it
+      - defer: docker compose logs app
+      - docker compose up --detach --wait
+      # Chrome refuses 0.0.0.0, the address Docker publishes on
+      - address="$(docker compose port app 8000)" && APP_URL="http://127.0.0.1:${address##*:}" pnpm --dir e2e exec playwright test
+
+  e2e:browser:
+    desc: Install the browser the end-to-end tests run in
+    dir: e2e
+    cmd: pnpm exec playwright install --only-shell chromium
+
+  e2e:lint:
+    desc: Lint the end-to-end tests
+    dir: e2e
+    cmd: pnpm exec biome check --formatter-enabled=false --error-on-warnings
+
+  e2e:format:
+    desc: Format the end-to-end tests
+    dir: e2e
+    cmd: pnpm exec biome format --write
+
+  e2e:format:check:
+    desc: Check that the end-to-end tests are formatted
+    dir: e2e
+    cmd: pnpm exec biome format
+
+  e2e:typecheck:
+    desc: Type check the end-to-end tests
+    dir: e2e
+    cmd: pnpm exec tsc
+
+  backend:lint:
+    desc: Lint the Backend
+    dir: backend
+    cmd: uv run --locked ruff check
+
+  backend:format:
+    desc: Format the Backend
+    dir: backend
+    cmd: uv run --locked ruff format
+
+  backend:format:check:
+    desc: Check that the Backend is formatted
+    dir: backend
+    cmd: uv run --locked ruff format --check
+
+  backend:typecheck:
+    desc: Type check the Backend
+    dir: backend
+    cmd: uv run --locked ty check
+
+  backend:test:
+    desc: Run the Backend's tests
+    dir: backend
+    cmd: uv run --locked pytest
+
+  backend:openapi:
+    desc: Export the Backend's OpenAPI document to backend/openapi.json
+    dir: backend
+    cmd: uv run --locked python -c 'import json; from app.main import app; print(json.dumps(app.openapi(), indent=2))' > openapi.json
+
+  backend:migration:create:
+    desc: 'Create a migration from the models, named by the words after --: task backend:migration:create -- add widgets'
+    dir: backend
+    dotenv: ['../.env', '../.env.example']
+    cmds:
+      # autogenerate compares the models with a database at the latest migration
+      - uv run --locked alembic upgrade head
+      - uv run --locked alembic revision --autogenerate -m {{join " " .CLI_ARGS_LIST | shellQuote}}
+
+  backend:database:reset:
+    desc: Delete the local database while the App is stopped; the App creates and migrates it again when it next starts
+    dir: backend
+    dotenv: ['../.env', '../.env.example']
+    cmd: rm -f "$APP_DATABASE_FILE" "$APP_DATABASE_FILE-wal" "$APP_DATABASE_FILE-shm"
+
+  frontend:dev:
+    desc: Start Vite with hot reload, proxying API requests to the App
+    dir: frontend
+    dotenv: ['../.env', '../.env.example']
+    cmd: pnpm exec vite
+
+  frontend:build:
+    desc: Build the Frontend into frontend/dist
+    dir: frontend
+    cmd: pnpm exec vite build
+
+  frontend:lint:
+    desc: Lint the Frontend
+    dir: frontend
+    cmd: pnpm exec biome check --formatter-enabled=false --error-on-warnings
+
+  frontend:format:
+    desc: Format the Frontend
+    dir: frontend
+    cmd: pnpm exec biome format --write
+
+  frontend:format:check:
+    desc: Check that the Frontend is formatted
+    dir: frontend
+    cmd: pnpm exec biome format
+
+  frontend:typecheck:
+    desc: Type check the Frontend
+    dir: frontend
+    cmd: pnpm exec tsc -b
+
+  frontend:test:
+    desc: Run the Frontend's tests
+    dir: frontend
+    cmd: pnpm exec vitest run
+
+  frontend:client:
+    desc: Regenerate the Client from the Backend's OpenAPI document
+    dir: frontend
+    deps: [backend:openapi]
+    cmd: pnpm exec kubb generate
+
+  frontend:client:check:
+    desc: Fail when the Client in git differs from the one the Backend's OpenAPI document generates
+    dir: frontend
+    deps: [frontend:client]
+    cmds:
+      - git diff --exit-code -- src/client
+      # git diff leaves out new files, such as one for a new operation; grep lists them and fails on any
+      - git ls-files --others --exclude-standard -- src/client | (! grep .)

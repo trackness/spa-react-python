@@ -1,0 +1,82 @@
+[project]
+name = "spa-react-python"
+dynamic = ["version"]
+requires-python = ">=3.14"
+dependencies = [
+    "alembic>=1.20.0",
+    "fastapi[standard-no-fastapi-cloud-cli]>=0.143.1",
+    "opentelemetry-exporter-prometheus>=0.66b1",
+    "opentelemetry-instrumentation-logging>=0.66b1",
+    "opentelemetry-sdk>=1.45.1",
+    "prometheus-client>=0.26.0",
+    "pydantic>=2.14.1",
+    "pydantic-settings>=2.16.0",
+    "python-json-logger>=4.2.0",
+    "sqlalchemy>=2.1.4",
+    "starlette>=1.8.0",
+    "uvicorn>=0.54.0",
+]
+
+[build-system]
+# hatchling, not uv_build: uv_build cannot read the version from version.txt
+requires = ["hatchling>=1.32.4"]
+build-backend = "hatchling.build"
+
+[tool.hatch.version]
+path = "../version.txt"
+pattern = "(?P<version>.+)"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/app"]
+
+[dependency-groups]
+dev = [
+    "httpx2>=2.13.1",
+    "prek>=0.5.5",
+    "pytest>=9.1.1",
+    "ruff>=0.17.0",
+    "ty>=0.0.87",
+]
+
+[tool.pytest]
+testpaths = ["tests"]
+
+[tool.ruff.lint]
+select = ["ALL"]
+ignore = [
+    "COM812", # conflicts with the formatter
+    "CPY",    # files carry no copyright header
+    "D",      # docstrings are not required
+    "TC",     # Pydantic and FastAPI resolve annotations at runtime
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = [
+    "INP001", # pytest collects tests without packages
+    "S101",   # tests assert
+]
+"migrations/**" = [
+    "INP001", # Alembic loads migrations without packages
+]
+
+[tool.ruff.lint.flake8-tidy-imports.banned-api]
+"__future__.annotations".msg = "banned by docs/standards.md"
+
+[tool.ty.rules]
+all = "error"
+
+[tool.alembic]
+script_location = "%(here)s/migrations"
+
+# a new migration passes the lint and format checks as generated
+[[tool.alembic.post_write_hooks]]
+name = "ruff_check"
+type = "module"
+module = "ruff"
+options = "check --fix REVISION_SCRIPT_FILENAME"
+
+[[tool.alembic.post_write_hooks]]
+name = "ruff_format"
+type = "module"
+module = "ruff"
+options = "format REVISION_SCRIPT_FILENAME"

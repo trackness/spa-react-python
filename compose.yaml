@@ -1,0 +1,17 @@
+services:
+  app:
+    build: .
+    image: spa-react-python
+    ports:
+      # HOST_PORT=8080 docker compose up publishes the App on another host port
+      - ${HOST_PORT:-8000}:8000
+    environment:
+      # the user and group the App runs as and owns its database with; 1000 when unset
+      - PUID
+      - PGID
+    volumes:
+      # a named volume lives on the Docker host's own disk, never a network filesystem
+      - database:/data
+
+volumes:
+  database:
