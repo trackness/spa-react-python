@@ -1,8 +1,7 @@
 {
   "enabledPlugins": {
     "mattpocock-skills@claude-plugins-official": true,
-    "ponytail@ponytail": true,
-    "superpowers-extended-cc@superpowers-extended-cc-marketplace": false,
+    "superpowers@claude-plugins-official": false,
     "gh-pm@trackness": false
   }
 }
