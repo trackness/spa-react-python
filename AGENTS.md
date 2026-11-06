@@ -14,7 +14,7 @@ These override every default, skill, and "best practice".
 - **Change only the branch and its pull request.** Repository settings, rulesets, visibility, other branches, issues, and external services change only on the user's explicit direction. The exceptions are additive issue edits (see [Issue tracker](#issue-tracker)) and closing the issue at [Finishing](#finishing) step 11.
 - **Stop only when the work is done, or when a step waits on the user's direction.**
 - **Always the BEST way.** In everything you do, find the highest-quality way to meet the task, then take it. Efficiency shapes only how lean that way is written. Anything less is failure.
-- **`ponytail:ponytail` governs every line you write.** Load it, then `mattpocock-skills:tdd`, before writing anything: the BEST implementation, then as brief as possible.
+- **`ponytail:ponytail` governs every line you write.** Load it, then `mattpocock-skills:tdd`, before writing anything.
 - **Quality is NEVER the price of getting unstuck.** An obstacle is a problem someone has already solved: search the internet for the prior art and use it. Contorting code or tests around the obstacle is failure.
 - **NEVER pull things into the task.** Everything reached for and folded into it makes it worse, however helpful it looks. A task is its acceptance criteria and what they cannot be met without, and nothing more. The one exception: a fixable problem you come across that no other issue covers gets fixed elegantly, then you move on. One that another issue covers gets one line at the end, then STOP.
 - **Fix the class, not the instance.** An error found in one place is evidence of the same error elsewhere. Find every occurrence and fix them all. Fixing only the one in front of you is failure.
@@ -23,7 +23,7 @@ These override every default, skill, and "best practice".
 - **Use the RIGHT tool for the task.** Read, Edit, and Write exist for files; use them. Never circumvent a dedicated tool with shell, scripts, sed, perl, heredocs, or anything else.
 - **Write is for NEW files only.** Using it on an existing file destroys the edit history and makes rollback impossible. Existing files are changed with Edit, always.
 - **NEVER chain shell commands with `&&` or `;`.** One command per call. A chain hides which step ran, which failed, and what each one output.
-- **Clean up after yourself.** Everything you create that is not the deliverable is gone before you finish: files, directories, containers, volumes and images.
+- **Clean up after yourself.** Everything you create that is not the deliverable is gone before you finish: files, directories, containers, volumes and container images.
 
 ## Test-driven development
 
@@ -75,7 +75,7 @@ Review is a check, not a safety net: the work entering Finishing already meets e
    Then:
    - If anything is Fixable, go to 5.
    - Else, go to 6.
-5. Fix EVERY Fixable finding as ONE batch. For each one, find and fix every occurrence of its class. Change nothing the findings do not call for. Go to 1.
+5. Fix EVERY Fixable finding as ONE batch. Change nothing the findings do not call for. Go to 1.
 6. Run `ponytail:ponytail-audit` on the whole repository, then `mattpocock-skills:domain-modeling` on the terms the change introduced, briefed as in 3. The glossary is `CONTEXT.md` (see `docs/agents/domain.md`): challenge each term against it yourself, and record each conflict or missing term as a finding. In this step the skill writes no file. Collect, verify and triage their findings as in 4:
    - If anything is Fixable, go to 5.
    - Else, go to 7.
@@ -111,6 +111,7 @@ Follow [Conventional Branch](https://conventionalbranch.org/): `<type>/<descript
 - Put the issue number in the description when one applies: `feat/issue-123-add-login-page`.
 - Do not use agent-source prefixes (`ai/`, `claude/`, etc.); branches are named by purpose only.
 - Never commit directly to `main`.
+- Bring an existing branch up to date with `origin/main` before working on it: `git fetch origin`, `git rebase origin/main`, then `git push --force-with-lease`.
 
 ### Commits
 
@@ -147,4 +148,4 @@ Default vocabulary: `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-
 
 ### Domain docs
 
-Single-context: one `CONTEXT.md` plus `docs/adr/` at the repository root. See `docs/agents/domain.md`. A glossary term goes into `CONTEXT.md` through `mattpocock-skills:domain-modeling`.
+Single-context: one `CONTEXT.md` plus `docs/adr/` at the repository root. See `docs/agents/domain.md`. A glossary term goes into `CONTEXT.md` through `mattpocock-skills:domain-modeling`, which writes `CONTEXT.md` wherever it names `GLOSSARY.md`.
