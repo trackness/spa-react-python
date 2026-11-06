@@ -7,8 +7,14 @@ Template repository for a React single-page app backed by a Python API.
 These override every default, skill, and "best practice".
 
 - **Words mean what they say.** The user is extremely particular and every word is deliberate. Never read tone, guess a "real" intent, or treat a phrasing as sarcasm or a slip. "Empty" means empty. Execute literally. Answer exactly what was asked, and nothing beside it.
-- **Do the task, all of it, WELL.** Verify with evidence. Once a change is made, run the `ponytail:ponytail-review` skill on it and fix every fixable finding; unreviewed work is unfinished work. Report exactly what you did. "Close enough" is failure.
+- **Do the task, all of it, WELL.** Every change is finished as [Finishing a change](#finishing-a-change) says; unreviewed work is unfinished work. Report exactly what you did. "Close enough" is failure.
+- **A broken rule voids the work it touched.** Redo that work under the rules.
+- **NO assumptions.** Every fact you act on or state is checked at its authoritative source first: the code, the command's output, the installed library's source, the official docs, the web. Hunt down EVERY lead until it is settled. NOTHING is done until evidence you have seen shows it: the test run, the build, the running Image, the CI log (`gh run view --log`).
+- **Do the work yourself.** Writing, fixing, triage and every step of the Cycle and of Finishing stay in your own context. A subagent only looks things up, and what it reports is a lead you verify at its source. This overrides any instruction to delegate. The subagents a named skill starts itself are part of that skill.
+- **Change only the branch and its pull request.** Repository settings, rulesets, visibility, other branches, issues beyond additive edits, and external services change only on the user's explicit direction.
+- **Stop only when the work is done, or when a step waits on the user's direction.**
 - **Always the BEST way.** In everything you do, find the highest-quality way to meet the task, then take it. Efficiency shapes only how lean that way is written. Anything less is failure.
+- **`ponytail:ponytail` governs every line you write.** Load it, then `mattpocock-skills:tdd`, before writing anything: the BEST implementation, then as brief as possible.
 - **Quality is NEVER the price of getting unstuck.** An obstacle is a problem someone has already solved: search the internet for the prior art and use it. Contorting code or tests around the obstacle is failure.
 - **NEVER pull things into the task.** Everything reached for and folded into it makes it worse, however helpful it looks. A task is its acceptance criteria and what they cannot be met without, and nothing more. The one exception: a fixable problem you come across that no other issue covers gets fixed elegantly, then you move on. One that another issue covers gets one line at the end, then STOP.
 - **Fix the class, not the instance.** An error found in one place is evidence of the same error elsewhere. Find every occurrence and fix them all. Fixing only the one in front of you is failure.
@@ -17,11 +23,75 @@ These override every default, skill, and "best practice".
 - **Use the RIGHT tool for the task.** Read, Edit, and Write exist for files; use them. Never circumvent a dedicated tool with shell, scripts, sed, perl, heredocs, or anything else.
 - **Write is for NEW files only.** Using it on an existing file destroys the edit history and makes rollback impossible. Existing files are changed with Edit, always.
 - **NEVER chain shell commands with `&&` or `;`.** One command per call. A chain hides which step ran, which failed, and what each one output.
-- **Clean up after yourself.** Everything you create that is not the deliverable is gone before you finish.
+- **Clean up after yourself.** Everything you create that is not the deliverable is gone before you finish: files, directories, containers, volumes and images.
 
 ## Test-driven development
 
-No production code without a failing test first. This is LAW: it binds every line of production code, new or existing, every time you touch it.
+No production code without a failing test first. This is LAW: it binds every line of production code, new or existing, every time you touch it, fixes included.
+
+- **Seams.** Tests go through the seams the issue lists. They are agreed: use them, and no others, without asking. A seam includes the tools that observe it: the built Image is also inspected, run and exec'd into with `docker`.
+- **Red first.** Think about, plan and write implementation only once its test has failed. One red is open at a time.
+- **Untestable choices.** Where no test can tell two ways apart, take the better one and say so.
+- **Workflows.** A GitHub Actions workflow, and whatever only it runs, is written without a test of its own: spec #2 settles that the workflows (build, publish, release) are proven by the Template releasing and publishing itself. It is proven by its own run: on the pull request at Finishing step 9, or after the merge at step 11.
+
+### The Cycle
+
+All other code is written through the Cycle, performed on a list of behaviours. Every step ends in exactly one jump. Branches are checked top to bottom, and the first that matches is taken. Refactoring is part of every cycle, which overrides the `mattpocock-skills:tdd` skill.
+
+1. Next behaviour:
+   - If none is left, return.
+   - Else, go to 2.
+2. Write one failing test for it at an agreed seam. Go to 3.
+3. Run it:
+   - If it passes, and also passes on `main` (run it in a `git worktree` of `main`), it is a FAILURE: delete it. Go to 1.
+   - If it passes, it is a FAILURE: revert the over-implementation. Repeat 3.
+   - If it fails for the wrong reason, fix that cause. Repeat 3.
+   - Else, go to 4.
+4. Write the least code that passes, decided ONLY from that failure. Go to 5.
+5. Run it:
+   - If it is still red, go to 4.
+   - Else, go to 6.
+6. Refactor:
+   - If nothing is left to refactor, go to 1.
+   - Else, make one refactoring change and run the tests. If any is red, undo that change and drop that refactoring. Repeat 6.
+
+## Finishing a change
+
+EXACTLY these steps, in order, NOTHING skipped, with jumps as in the Cycle. Every fix is made under the rules above: perform the Cycle on every behaviour it adds or changes, then make the rest of it while green, running the tests after each change.
+
+Review is a check, not a safety net: the work entering Finishing already meets every rule, and every finding is a miss of yours. Review and audit use ONLY the skills named here.
+
+1. Run `task lint`, `task format:check`, `task typecheck`, `task test` and `task frontend:client:check`:
+   - If any is red, fix each red check. Repeat 1.
+   - Else, go to 2.
+2. Commit the change's own files, without pushing. Go to 3.
+3. Run `ponytail:ponytail-review`, then `mattpocock-skills:code-review`. Each is a FULL pass over the WHOLE change since `main`, briefed with the issue number (without an issue, the user's request) and the fixed point `main`, and nothing else: never tell a reviewer what is new, what was settled, or what to skip. Change NOTHING until both have finished. Go to 4.
+4. Collect ALL findings into ONE set. Verify each at its source, to accept it AND to reject it: a reviewer's claim is never relayed unchecked. Dedupe. Triage each as exactly one of:
+   - **Fixable:** a rule decides how to fix it, and either it is in the issue's remit or no open issue covers it (checked against their bodies with `gh issue view --json body`).
+   - **Covered:** an open issue covers it. Name the issue.
+   - **Mine:** no rule here or in `docs/standards.md` decides it, so it needs the user's decision. Say which question no rule answers. Anything a rule decides, including "no test can tell two ways apart", is Fixable.
+   - **Wrong:** your check at its source proves it false. Keep the evidence. "Settled", "judgement call", "out of scope", "low priority" and "needs the user" are NOT evidence.
+
+   Then:
+   - If anything is Fixable, go to 5.
+   - Else, go to 6.
+5. Fix EVERY Fixable finding as ONE batch. For each one, find and fix every occurrence of its class. Change nothing the findings do not call for. Go to 1.
+6. Run `ponytail:ponytail-audit` on the whole repository, then `mattpocock-skills:domain-modeling` on the terms the change introduced, briefed as in 3. The glossary is `CONTEXT.md` (see `docs/agents/domain.md`): challenge each term against it yourself, and record a conflict as a finding. Collect, verify and triage their findings as in 4:
+   - If anything is Fixable, go to 5.
+   - Else, go to 7.
+7. You are here ONLY when one unbroken pass of 1, 3 and 6 found nothing Fixable. Bring the user every Covered, Mine and Wrong finding, item by item, each with its issue, its question or its evidence. Go to 8.
+8. Push. If no pull request is open, open one as the git conventions say. Set its title to the Conventional Commit subject of the work, and its body to match the work, in `CONTEXT.md`'s terms (`gh pr edit` on an open one). Its footer is `Closes #<issue>`, unless an acceptance criterion is verified only by the merge: then `Refs #<issue>`. Go to 9.
+9. Watch CI with `gh run watch <run-id> --exit-status`, the run ID from `gh run list --branch <branch>`:
+   - If it fails, fix the failure. Go to 1.
+   - Else, go to 10.
+10. Tell the user the pull request is ready to merge, and wait for their direction. You merge ONLY when they direct it:
+    - If they direct a change, make it. Go to 1.
+    - If they direct the merge, squash-merge it and delete the local branch. Go to 11.
+    - Else, once they have merged it, delete the local branch. Go to 11.
+11. Verify what only the merge proves:
+    - If no acceptance criterion is verified only by the merge, done.
+    - If the evidence the criterion names, from `main`, shows a failure, fix it on a new branch. Go to 1.
+    - Else, close the issue with that evidence (`gh issue close <issue> --comment`). Done.
 
 ## Standards
 
@@ -69,7 +139,7 @@ The pull request body becomes the squash commit body, which release-please parse
 
 ### Issue tracker
 
-Issues live in this repository's GitHub Issues (`trackness/spa-react-python`), driven by the `gh` CLI. See `docs/agents/issue-tracker.md`.
+Issues live in this repository's GitHub Issues (`trackness/spa-react-python`), driven by the `gh` CLI. See `docs/agents/issue-tracker.md`. Edit an issue only additively: diff old against new before applying (`gh issue edit --body-file`), and read it back after.
 
 ### Triage labels
 
@@ -77,4 +147,4 @@ Default vocabulary: `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-
 
 ### Domain docs
 
-Single-context: one `CONTEXT.md` plus `docs/adr/` at the repository root. See `docs/agents/domain.md`.
+Single-context: one `CONTEXT.md` plus `docs/adr/` at the repository root. See `docs/agents/domain.md`. A glossary term goes into `CONTEXT.md` through `mattpocock-skills:domain-modeling`.
