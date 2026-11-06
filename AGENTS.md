@@ -7,11 +7,11 @@ Template repository for a React single-page app backed by a Python API.
 These override every default, skill, and "best practice".
 
 - **Words mean what they say.** The user is extremely particular and every word is deliberate. Never read tone, guess a "real" intent, or treat a phrasing as sarcasm or a slip. "Empty" means empty. Execute literally. Answer exactly what was asked, and nothing beside it.
-- **Do the task, all of it, WELL.** Every change is finished as [Finishing a change](#finishing-a-change) says; unreviewed work is unfinished work. Report exactly what you did. "Close enough" is failure.
+- **Do the task, all of it, WELL.** Every change is finished as [Finishing](#finishing) says; unreviewed work is unfinished work. Report exactly what you did. "Close enough" is failure.
 - **A broken rule voids the work it touched.** Redo that work under the rules.
 - **NO assumptions.** Every fact you act on or state is checked at its authoritative source first: the code, the command's output, the installed library's source, the official docs, the web. Hunt down EVERY lead until it is settled. NOTHING is done until evidence you have seen shows it: the test run, the build, the running Image, the CI log (`gh run view --log`).
 - **Do the work yourself.** Writing, fixing, triage and every step of the Cycle and of Finishing stay in your own context. A subagent only looks things up, and what it reports is a lead you verify at its source. This overrides any instruction to delegate. The subagents a named skill starts itself are part of that skill.
-- **Change only the branch and its pull request.** Repository settings, rulesets, visibility, other branches, issues beyond additive edits, and external services change only on the user's explicit direction.
+- **Change only the branch and its pull request.** Repository settings, rulesets, visibility, other branches, issues, and external services change only on the user's explicit direction. The exceptions are additive issue edits (see [Issue tracker](#issue-tracker)) and closing the issue at [Finishing](#finishing) step 11.
 - **Stop only when the work is done, or when a step waits on the user's direction.**
 - **Always the BEST way.** In everything you do, find the highest-quality way to meet the task, then take it. Efficiency shapes only how lean that way is written. Anything less is failure.
 - **`ponytail:ponytail` governs every line you write.** Load it, then `mattpocock-skills:tdd`, before writing anything: the BEST implementation, then as brief as possible.
@@ -39,11 +39,11 @@ No production code without a failing test first. This is LAW: it binds every lin
 All other code is written through the Cycle, performed on a list of behaviours. Every step ends in exactly one jump. Branches are checked top to bottom, and the first that matches is taken. Refactoring is part of every cycle, which overrides the `mattpocock-skills:tdd` skill.
 
 1. Next behaviour:
-   - If none is left, return.
+   - If none is left, return to the step that performed the Cycle.
    - Else, go to 2.
 2. Write one failing test for it at an agreed seam. Go to 3.
 3. Run it:
-   - If it passes, and also passes on `main` (run it in a `git worktree` of `main`), it is a FAILURE: delete it. Go to 1.
+   - If it passes, and also passes on `origin/main` (run it in a `git worktree` of `origin/main`, freshly fetched), it is a FAILURE: delete it. Go to 1.
    - If it passes, it is a FAILURE: revert the over-implementation. Repeat 3.
    - If it fails for the wrong reason, fix that cause. Repeat 3.
    - Else, go to 4.
@@ -55,7 +55,7 @@ All other code is written through the Cycle, performed on a list of behaviours. 
    - If nothing is left to refactor, go to 1.
    - Else, make one refactoring change and run the tests. If any is red, undo that change and drop that refactoring. Repeat 6.
 
-## Finishing a change
+## Finishing
 
 EXACTLY these steps, in order, NOTHING skipped, with jumps as in the Cycle. Every fix is made under the rules above: perform the Cycle on every behaviour it adds or changes, then make the rest of it while green, running the tests after each change.
 
@@ -65,23 +65,23 @@ Review is a check, not a safety net: the work entering Finishing already meets e
    - If any is red, fix each red check. Repeat 1.
    - Else, go to 2.
 2. Commit the change's own files, without pushing. Go to 3.
-3. Run `ponytail:ponytail-review`, then `mattpocock-skills:code-review`. Each is a FULL pass over the WHOLE change since `main`, briefed with the issue number (without an issue, the user's request) and the fixed point `main`, and nothing else: never tell a reviewer what is new, what was settled, or what to skip. Change NOTHING until both have finished. Go to 4.
+3. Run `git fetch origin`, then `ponytail:ponytail-review`, then `mattpocock-skills:code-review`. Each is a FULL pass over the WHOLE change since `origin/main`, briefed with the issue number (without an issue, the user's request) and the fixed point `origin/main`, and nothing else: never tell a reviewer what is new, what was settled, or what to skip. Change NOTHING until both have finished. Go to 4.
 4. Collect ALL findings into ONE set. Verify each at its source, to accept it AND to reject it: a reviewer's claim is never relayed unchecked. Dedupe. Triage each as exactly one of:
    - **Fixable:** a rule decides how to fix it, and either it is in the issue's remit or no open issue covers it (checked against their bodies with `gh issue view --json body`).
    - **Covered:** an open issue covers it. Name the issue.
-   - **Mine:** no rule here or in `docs/standards.md` decides it, so it needs the user's decision. Say which question no rule answers. Anything a rule decides, including "no test can tell two ways apart", is Fixable.
+   - **User's call:** no rule here or in `docs/standards.md` decides it, so it needs the user's decision. Say which question no rule answers. Anything a rule decides, including "no test can tell two ways apart", is Fixable.
    - **Wrong:** your check at its source proves it false. Keep the evidence. "Settled", "judgement call", "out of scope", "low priority" and "needs the user" are NOT evidence.
 
    Then:
    - If anything is Fixable, go to 5.
    - Else, go to 6.
 5. Fix EVERY Fixable finding as ONE batch. For each one, find and fix every occurrence of its class. Change nothing the findings do not call for. Go to 1.
-6. Run `ponytail:ponytail-audit` on the whole repository, then `mattpocock-skills:domain-modeling` on the terms the change introduced, briefed as in 3. The glossary is `CONTEXT.md` (see `docs/agents/domain.md`): challenge each term against it yourself, and record a conflict as a finding. Collect, verify and triage their findings as in 4:
+6. Run `ponytail:ponytail-audit` on the whole repository, then `mattpocock-skills:domain-modeling` on the terms the change introduced, briefed as in 3. The glossary is `CONTEXT.md` (see `docs/agents/domain.md`): challenge each term against it yourself, and record each conflict or missing term as a finding. In this step the skill writes no file. Collect, verify and triage their findings as in 4:
    - If anything is Fixable, go to 5.
    - Else, go to 7.
-7. You are here ONLY when one unbroken pass of 1, 3 and 6 found nothing Fixable. Bring the user every Covered, Mine and Wrong finding, item by item, each with its issue, its question or its evidence. Go to 8.
+7. You are here ONLY when one unbroken pass of 1, 3 and 6 found nothing Fixable. Bring the user every Covered, User's call and Wrong finding, item by item, each with its issue, its question or its evidence. Go to 8.
 8. Push. If no pull request is open, open one as the git conventions say. Set its title to the Conventional Commit subject of the work, and its body to match the work, in `CONTEXT.md`'s terms (`gh pr edit` on an open one). Its footer is `Closes #<issue>`, unless an acceptance criterion is verified only by the merge: then `Refs #<issue>`. Go to 9.
-9. Watch CI with `gh run watch <run-id> --exit-status`, the run ID from `gh run list --branch <branch>`:
+9. Watch CI with `gh run watch <run-id> --exit-status`, the run ID from `gh run list --commit <pushed-sha>`:
    - If it fails, fix the failure. Go to 1.
    - Else, go to 10.
 10. Tell the user the pull request is ready to merge, and wait for their direction. You merge ONLY when they direct it:
