@@ -45,7 +45,7 @@ All other code is written through the Cycle, performed on a list of behaviours. 
    - Else, go to 2.
 2. Write one failing test for it at an agreed seam. Go to 3.
 3. Run it:
-   - If it passes, and also passes on `origin/main` (copy the test into a `git worktree` of `origin/main`, freshly fetched, run it there, then remove the worktree), it is a FAILURE: delete it. Go to 1.
+   - If it passes, and also passes on `origin/main` (copy the test, with Read then Write, into a `git worktree` of `origin/main`, freshly fetched, run it there, then remove the worktree), it is a FAILURE: delete it. Go to 1.
    - If it passes because of code an earlier failing test on this branch demanded, the behaviour is already done: delete the test. Go to 1.
    - If it passes, it is a FAILURE: the branch already holds code no failing test demanded. Revert that code. Repeat 3.
    - If it fails for the wrong reason, fix that cause. Repeat 3.

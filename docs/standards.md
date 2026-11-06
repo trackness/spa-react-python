@@ -6,7 +6,7 @@ The standards every change in this repository follows.
 
 Never hand-roll anything a strong implementation already does. Good dependencies are not to be avoided. Follow a framework's standard tooling and patterns unless there is a need to deviate.
 
-Before writing anything, read the installed dependencies' source (`backend/.venv`, `*/node_modules`, and each GitHub Action's `action.yml` at its pinned version) for a built-in or standard hook that already does it. Never contort a dependency into a place it does not belong.
+Before writing anything, read the dependencies' source (`backend/.venv`, `*/node_modules`, and each GitHub Action's `action.yml` and source at the version it pins, fetched with `gh api`) for a built-in or standard hook that already does it. Never contort a dependency into a place it does not belong.
 
 ## Comments
 
