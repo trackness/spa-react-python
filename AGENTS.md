@@ -34,7 +34,7 @@ Load `mattpocock-skills:tdd` before writing code.
 - **Seams.** Tests go through the seams the issue lists, or, without an issue, the seams the existing tests already drive. They are agreed: use them, and no others, without asking. A seam includes the tools that observe it: the built Image is also inspected, run and exec'd into with `docker`.
 - **Red first.** Think about, plan and write implementation only once its test has failed. One red is open at a time.
 - **Untestable choices.** Where no test can tell two ways apart, take the better one and say so.
-- **Workflows.** No seam can drive a GitHub Actions workflow, so a workflow, and whatever only it runs, is written without a test of its own. It is proven by its own run: on the pull request at Finishing step 9, or after the merge at step 11.
+- **Workflows.** No seam can drive a GitHub Actions workflow, so a workflow, and whatever only it runs, is written without a test of its own. It is proven by its own run: on the pull request at Finishing step 9, or after the merge at step 11. A workflow with no run where its trigger is due has failed.
 
 ### The Cycle
 
@@ -60,7 +60,7 @@ All other code is written through the Cycle, performed on a list of behaviours. 
 
 ## Finishing
 
-EXACTLY these steps, in order, NOTHING skipped, with jumps as in the Cycle. Every fix is made under the rules above: perform the Cycle on every behaviour it adds or changes, then make the rest of it while green, running `task test` after each change.
+EXACTLY these steps, in order, NOTHING skipped, with jumps as in the Cycle. Every fix is made under the rules above: perform the Cycle on every behaviour it adds or changes (a workflow excepted, as Workflows says), then make the part that adds or changes no behaviour while green, running `task test` after each change.
 
 Review is a check, not a safety net: the work entering Finishing already meets every rule, and every finding is a miss of yours. Review and audit use ONLY the skills named here.
 
