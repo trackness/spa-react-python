@@ -69,7 +69,7 @@ Review is a check, not a safety net: the work entering Finishing already meets e
    - Else, go to 2.
 2. Commit the change's own files, without pushing. Go to 3.
 3. Run `git fetch origin`, then `ponytail:ponytail-review`, then `mattpocock-skills:code-review`. Each is a FULL pass over the WHOLE change since `origin/main`, briefed with the issue number (without an issue, the user's request) and the fixed point `origin/main`, and nothing else: never tell a reviewer what is new, what was settled, or what to skip. Change NOTHING until both have finished. Go to 4.
-4. Collect ALL findings into ONE set. Verify each at its source, to accept it AND to reject it: a reviewer's claim is never relayed unchecked. Dedupe. Triage each as exactly one of:
+4. Collect ALL findings into ONE set. Verify each at its source, to accept it AND to reject it: a reviewer's claim is never relayed unchecked. Dedupe. Triage each as the first of these that fits:
    - **Fixable:** a rule decides how to fix it, and either it is in the issue's remit (without an issue, the user's request) or no open issue covers it (checked against each open issue's body and comments with `gh issue view <number> --comments`).
    - **Covered:** an open issue covers it. Name the issue.
    - **User's call:** no rule here or in `docs/standards.md` decides it, so it needs the user's decision. Say which question no rule answers. Anything a rule decides, including "no test can tell two ways apart", is Fixable.
