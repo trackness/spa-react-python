@@ -34,7 +34,7 @@ Load `mattpocock-skills:tdd` before writing code.
 - **Seams.** Tests go through the seams the issue lists, or, without an issue, the seams the existing tests already drive. They are agreed: use them, and no others, without asking. A seam includes the tools that observe it: the built Image is also inspected, run and exec'd into with `docker`.
 - **Red first.** Think about, plan and write implementation only once its test has failed. One red is open at a time.
 - **Untestable choices.** Where no test can tell two ways apart, take the better one and say so.
-- **Workflows.** No seam can drive a GitHub Actions workflow, so a workflow, and whatever only it runs, is written without a test of its own. It is proven by its own run: on the pull request at Finishing step 9, or after the merge at step 11. A workflow with no run where its trigger is due has failed.
+- **Workflows.** None of the agreed seams can drive a GitHub Actions workflow, so a workflow, and whatever only it runs, is written without a test of its own. It is proven by its own run: on the pull request at Finishing step 9, or after the merge at step 11. A workflow with no run where its trigger is due has failed.
 
 ### The Cycle
 
@@ -45,7 +45,7 @@ All other code is written through the Cycle, performed on a list of behaviours. 
    - Else, go to 2.
 2. Write one failing test for it at an agreed seam. Go to 3.
 3. Run it:
-   - If it passes, and also passes on `origin/main` (copy the test, with Read then Write, into a `git worktree` of `origin/main`, freshly fetched, run it there, then remove the worktree), it is a FAILURE: delete it. Go to 1.
+   - If it passes, and also passes on `origin/main` (copy the test into a `git worktree` of `origin/main` with Read, then Write for a new file or Edit for an existing one, freshly fetched, run it there, then remove the worktree), it is a FAILURE: delete it. Go to 1.
    - If it passes because of code an earlier failing test on this branch demanded, the behaviour is already done: delete the test. Go to 1.
    - If it passes, it is a FAILURE: the branch already holds code no failing test demanded. Revert that code. Repeat 3.
    - If it fails for the wrong reason, fix that cause. Repeat 3.
