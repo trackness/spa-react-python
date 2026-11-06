@@ -93,7 +93,8 @@ Review is a check, not a safety net: the work entering Finishing already meets e
     - Else, once they have merged it, delete the local branch. Go to 11.
 11. Verify what only the merge proves:
     - If no acceptance criterion is verified only by the merge, done.
-    - If the evidence the criterion names, from `main` (every run for the merge commit, from `gh run list --commit <merge-sha>`, watched to the end as in 9), shows a failure, fix it on a new branch. Go to 1.
+    - If the merge the criterion names has not happened yet, wait for the user to make it. Repeat 11.
+    - If the evidence the criterion names, from that merge on `main` (every run for its commit, from `gh run list --commit <merge-sha>`, watched to the end as in 9), shows a failure, fix it on a new branch. Go to 1.
     - Else, close the issue with that evidence, as [`docs/agents/issue-tracker.md`](docs/agents/issue-tracker.md) says for multi-line text. Done.
 
 ## Standards
