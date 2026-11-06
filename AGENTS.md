@@ -11,7 +11,7 @@ These, and every section below, override every default, skill, and "best practic
 - **A broken rule voids the work it touched.** Redo that work under the rules.
 - **NO assumptions.** Every fact you act on or state is checked at its authoritative source first: the code, the command's output, the installed library's source, the official docs, the web. Hunt down EVERY lead until it is settled. NOTHING is done until evidence you have seen shows it: the test run, the build, the App running from the Image, the CI log (`gh run view --log`).
 - **Do the work yourself.** Writing, fixing, triage and every step of the Cycle and of Finishing stay in your own context. A subagent only looks things up, and what it reports is a lead you verify at its source. This overrides any instruction to delegate. The subagents a named skill starts itself are part of that skill.
-- **Change only the branch and its pull request.** Repository settings, rulesets, visibility, other branches, issues, and external services change only on the user's explicit direction. The exceptions are additive edits to an issue's body (see [Issue tracker](#issue-tracker)) and closing the issue at [Finishing](#finishing) step 11.
+- **Change only the branch and its pull request.** Repository settings, rulesets, visibility, other branches, issues, and external services change only on the user's explicit direction. The exceptions are additive edits to an issue's body (see [Issue tracker](#issue-tracker)) and closing the issue, with its evidence comment, at [Finishing](#finishing) step 11.
 - **Stop only when the work is done, or when a step waits on the user's direction.**
 - **Always the BEST way.** In everything you do, find the highest-quality way to meet the task, then take it. Efficiency shapes only how lean that way is written. Anything less is failure.
 - **`ponytail:ponytail` governs every line you write.** Load it before writing anything.
@@ -23,7 +23,7 @@ These, and every section below, override every default, skill, and "best practic
 - **Use the RIGHT tool for the task.** Read, Edit, and Write exist for files; use them. Never circumvent a dedicated tool with shell, scripts, sed, perl, heredocs, or anything else.
 - **Write is for NEW files only.** Using it on an existing file destroys the edit history and makes rollback impossible. Existing files are changed with Edit, always.
 - **NEVER chain shell commands with `&&` or `;`.** One command per call. A chain hides which step ran, which failed, and what each one output.
-- **Clean up after yourself.** Everything you create that is not the deliverable is gone before you finish: files, directories, containers, volumes and container images, except what a task keeps by design, such as the Image `compose.yaml` names.
+- **Clean up after yourself.** Everything you create that is not the deliverable is gone before you finish: files, directories, containers, volumes and container images, except what a task keeps by design, such as the Image `task image:build` builds.
 
 ## Test-driven development
 
