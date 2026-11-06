@@ -134,6 +134,7 @@ Follow [Conventional Commits 1.0.0](https://www.conventionalcommits.org/en/v1.0.
 - Open a pull request against `main`. The pull request title must itself be a valid Conventional Commit subject and the body must be in the same shape, because GitHub uses them verbatim as the squash commit's message.
 - Branches are **squash-merged** only. Merge commits and rebase merges are disabled in the repository settings.
 - The branch is deleted on merge (enforced by the repository settings). Delete the local branch too.
+- **Pull request numbers are never reissued, so never waste one.** Never close a pull request, and never rename the branch an open pull request comes from: GitHub closes that pull request. Before opening a pull request, reuse one parked for reuse (titled `chore: parked for reuse`; `gh pr list --search "parked for reuse in:title"` lists them): reset its branch to the new work, keep the branch's name, and retitle it. A parked pull request's branch is exempt from the naming rules above.
 
 ### Pull request body
 
