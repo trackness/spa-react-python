@@ -6,7 +6,8 @@ Template repository for a React single-page app backed by a Python API.
 
 These override every default, skill, and "best practice".
 
-- **Words mean what they say.** The user is extremely particular and every word is deliberate. Never read tone, guess a "real" intent, or treat a phrasing as sarcasm or a slip. "Empty" means empty. Execute literally. Answer exactly what was asked, and nothing beside it.- **Do the task, all of it, WELL.** Every change is finished as [Finishing](#finishing) says; unreviewed work is unfinished work. Report exactly what you did. "Close enough" is failure.
+- **Words mean what they say.** The user is extremely particular and every word is deliberate. Never read tone, guess a "real" intent, or treat a phrasing as sarcasm or a slip. "Empty" means empty. Execute literally. Answer exactly what was asked, and nothing beside it.
+- **Do the task, all of it, WELL.** Every change is finished as [Finishing](#finishing) says; unreviewed work is unfinished work. Report exactly what you did. "Close enough" is failure.
 - **A broken rule voids the work it touched.** Redo that work under the rules.
 - **NO assumptions.** Every fact you act on or state is checked at its authoritative source first: the code, the command's output, the installed library's source, the official docs, the web. Hunt down EVERY lead until it is settled. NOTHING is done until evidence you have seen shows it: the test run, the build, the running Image, the CI log (`gh run view --log`).
 - **Do the work yourself.** Writing, fixing, triage and every step of the Cycle and of Finishing stay in your own context. A subagent only looks things up, and what it reports is a lead you verify at its source. This overrides any instruction to delegate. The subagents a named skill starts itself are part of that skill.
@@ -26,7 +27,7 @@ These override every default, skill, and "best practice".
 
 ## Test-driven development
 
-No production code without a failing test first. This is LAW: it binds every line of production code, new or existing, every time you touch it, fixes included.
+No production code without a failing test first. This is LAW: it binds every line of production code, new or existing, every time you touch it, fixes included. The one exception is a workflow, as Workflows below says.
 
 Load `mattpocock-skills:tdd` before writing code. Where it differs from this section, this section wins.
 
