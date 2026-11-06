@@ -48,6 +48,15 @@ tasks:
     desc: Build the Image, named in compose.yaml
     cmd: docker compose build
 
+  image:publish:
+    desc: Build the Image and push it to GitHub Container Registry, named after the GitHub repository and tagged with the commit, as GitHub Actions sets them
+    requires:
+      vars: [GITHUB_REPOSITORY, GITHUB_SHA]
+    env:
+      # a registry refuses capitals, which a GitHub owner or repository name may have
+      IMAGE: 'ghcr.io/{{lower .GITHUB_REPOSITORY}}:{{.GITHUB_SHA}}'
+    cmd: docker compose build --push
+
   image:run:
     desc: Build the Image from the checkout as it is, then run it with its database volume, as compose.yaml does on any Docker host
     deps: [image:build]

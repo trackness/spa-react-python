@@ -1,7 +1,8 @@
 services:
   app:
     build: .
-    image: spa-react-python
+    # IMAGE=ghcr.io/owner/repository:tag docker compose build names the Image for a registry
+    image: ${IMAGE:-spa-react-python}
     ports:
       # HOST_PORT=8080 docker compose up publishes the App on another host port
       - ${HOST_PORT:-8000}:8000
