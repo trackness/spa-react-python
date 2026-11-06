@@ -6,15 +6,14 @@ Template repository for a React single-page app backed by a Python API.
 
 These override every default, skill, and "best practice".
 
-- **Words mean what they say.** The user is extremely particular and every word is deliberate. Never read tone, guess a "real" intent, or treat a phrasing as sarcasm or a slip. "Empty" means empty. Execute literally. Answer exactly what was asked, and nothing beside it.
-- **Do the task, all of it, WELL.** Every change is finished as [Finishing](#finishing) says; unreviewed work is unfinished work. Report exactly what you did. "Close enough" is failure.
+- **Words mean what they say.** The user is extremely particular and every word is deliberate. Never read tone, guess a "real" intent, or treat a phrasing as sarcasm or a slip. "Empty" means empty. Execute literally. Answer exactly what was asked, and nothing beside it.- **Do the task, all of it, WELL.** Every change is finished as [Finishing](#finishing) says; unreviewed work is unfinished work. Report exactly what you did. "Close enough" is failure.
 - **A broken rule voids the work it touched.** Redo that work under the rules.
 - **NO assumptions.** Every fact you act on or state is checked at its authoritative source first: the code, the command's output, the installed library's source, the official docs, the web. Hunt down EVERY lead until it is settled. NOTHING is done until evidence you have seen shows it: the test run, the build, the running Image, the CI log (`gh run view --log`).
 - **Do the work yourself.** Writing, fixing, triage and every step of the Cycle and of Finishing stay in your own context. A subagent only looks things up, and what it reports is a lead you verify at its source. This overrides any instruction to delegate. The subagents a named skill starts itself are part of that skill.
 - **Change only the branch and its pull request.** Repository settings, rulesets, visibility, other branches, issues, and external services change only on the user's explicit direction. The exceptions are additive edits to an issue's body (see [Issue tracker](#issue-tracker)) and closing the issue at [Finishing](#finishing) step 11.
 - **Stop only when the work is done, or when a step waits on the user's direction.**
 - **Always the BEST way.** In everything you do, find the highest-quality way to meet the task, then take it. Efficiency shapes only how lean that way is written. Anything less is failure.
-- **`ponytail:ponytail` governs every line you write.** Load it, then `mattpocock-skills:tdd`, before writing anything.
+- **`ponytail:ponytail` governs every line you write.** Load it before writing anything.
 - **Quality is NEVER the price of getting unstuck.** An obstacle is a problem someone has already solved: search the internet for the prior art and use it. Contorting code or tests around the obstacle is failure.
 - **NEVER pull things into the task.** Everything reached for and folded into it makes it worse, however helpful it looks. A task is its acceptance criteria and what they cannot be met without, and nothing more. The one exception: a fixable problem you come across that no other issue covers gets fixed elegantly, then you move on. One that another issue covers gets one line at the end, then STOP.
 - **Fix the class, not the instance.** An error found in one place is evidence of the same error elsewhere. Find every occurrence and fix them all. Fixing only the one in front of you is failure.
@@ -23,20 +22,22 @@ These override every default, skill, and "best practice".
 - **Use the RIGHT tool for the task.** Read, Edit, and Write exist for files; use them. Never circumvent a dedicated tool with shell, scripts, sed, perl, heredocs, or anything else.
 - **Write is for NEW files only.** Using it on an existing file destroys the edit history and makes rollback impossible. Existing files are changed with Edit, always.
 - **NEVER chain shell commands with `&&` or `;`.** One command per call. A chain hides which step ran, which failed, and what each one output.
-- **Clean up after yourself.** Everything you create that is not the deliverable is gone before you finish: files, directories, containers, volumes and container images.
+- **Clean up after yourself.** Everything you create that is not the deliverable is gone before you finish: files, directories, containers, volumes and container images, except what a task keeps by design, such as the Image `task image:build` names.
 
 ## Test-driven development
 
 No production code without a failing test first. This is LAW: it binds every line of production code, new or existing, every time you touch it, fixes included.
 
+Load `mattpocock-skills:tdd` before writing code. Where it differs from this section, this section wins.
+
 - **Seams.** Tests go through the seams the issue lists. They are agreed: use them, and no others, without asking. A seam includes the tools that observe it: the built Image is also inspected, run and exec'd into with `docker`.
 - **Red first.** Think about, plan and write implementation only once its test has failed. One red is open at a time.
 - **Untestable choices.** Where no test can tell two ways apart, take the better one and say so.
-- **Workflows.** A GitHub Actions workflow, and whatever only it runs, is written without a test of its own: the spec, issue #2, settles that the workflows (build, publish, release) are proven by the Template releasing and publishing itself. It is proven by its own run: on the pull request at Finishing step 9, or after the merge at step 11.
+- **Workflows.** No seam can drive a GitHub Actions workflow, so a workflow, and whatever only it runs, is written without a test of its own. It is proven by its own run: on the pull request at Finishing step 9, or after the merge at step 11.
 
 ### The Cycle
 
-All other code is written through the Cycle, performed on a list of behaviours. Every step ends in exactly one jump. Branches are checked top to bottom, and the first that matches is taken. Refactoring is part of every cycle, which overrides the `mattpocock-skills:tdd` skill.
+All other code is written through the Cycle, performed on a list of behaviours. Every step ends in exactly one jump. Branches are checked top to bottom, and the first that matches is taken. Refactoring is part of every cycle.
 
 1. Next behaviour:
    - If none is left, return to the step that performed the Cycle.
@@ -67,7 +68,7 @@ Review is a check, not a safety net: the work entering Finishing already meets e
 2. Commit the change's own files, without pushing. Go to 3.
 3. Run `git fetch origin`, then `ponytail:ponytail-review`, then `mattpocock-skills:code-review`. Each is a FULL pass over the WHOLE change since `origin/main`, briefed with the issue number (without an issue, the user's request) and the fixed point `origin/main`, and nothing else: never tell a reviewer what is new, what was settled, or what to skip. Change NOTHING until both have finished. Go to 4.
 4. Collect ALL findings into ONE set. Verify each at its source, to accept it AND to reject it: a reviewer's claim is never relayed unchecked. Dedupe. Triage each as exactly one of:
-   - **Fixable:** a rule decides how to fix it, and either it is in the issue's remit or no open issue covers it (checked against their bodies with `gh issue view --json body`).
+   - **Fixable:** a rule decides how to fix it, and either it is in the issue's remit or no open issue covers it (checked against each open issue's body and comments with `gh issue view <number> --comments`).
    - **Covered:** an open issue covers it. Name the issue.
    - **User's call:** no rule here or in `docs/standards.md` decides it, so it needs the user's decision. Say which question no rule answers. Anything a rule decides, including "no test can tell two ways apart", is Fixable.
    - **Wrong:** your check at its source proves it false. Keep the evidence. "Settled", "judgement call", "out of scope", "low priority" and "needs the user" are NOT evidence.
@@ -76,7 +77,7 @@ Review is a check, not a safety net: the work entering Finishing already meets e
    - If anything is Fixable, go to 5.
    - Else, go to 6.
 5. Fix EVERY Fixable finding as ONE batch. Change nothing the findings do not call for. Go to 1.
-6. Run `ponytail:ponytail-audit` on the whole repository, briefed with the issue number (without an issue, the user's request) and nothing else. Then run `mattpocock-skills:domain-modeling` on the terms the change introduced, briefed as in 3. The glossary is `CONTEXT.md` (see `docs/agents/domain.md`): challenge each term against it yourself, and record each conflict or missing term as a finding. In this step the skill writes no file. Collect, verify and triage their findings as in 4:
+6. Run `ponytail:ponytail-audit` on the whole repository, briefed with the issue number (without an issue, the user's request) and nothing else. Then run `mattpocock-skills:domain-modeling` on the change, briefed as in 3. The glossary is `CONTEXT.md` (see `docs/agents/domain.md`): find the terms the change introduces, challenge each against it yourself, and record each conflict or missing term as a finding. In this step the skill writes no file. Collect, verify and triage their findings as in 4:
    - If anything is Fixable, go to 5.
    - Else, go to 7.
 7. You are here ONLY when one unbroken pass of 1, 3 and 6 found nothing Fixable. Bring the user every Covered, User's call and Wrong finding, item by item, each with its issue, its question or its evidence. Go to 8.
