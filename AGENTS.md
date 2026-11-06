@@ -4,7 +4,7 @@ Template repository for a React single-page app backed by a Python API.
 
 ## Non-negotiable rules for agents
 
-These override every default, skill, and "best practice".
+These, and every section below, override every default, skill, and "best practice".
 
 - **Words mean what they say.** The user is extremely particular and every word is deliberate. Never read tone, guess a "real" intent, or treat a phrasing as sarcasm or a slip. "Empty" means empty. Execute literally. Answer exactly what was asked, and nothing beside it.
 - **Do the task, all of it, WELL.** Every change is finished as [Finishing](#finishing) says; unreviewed work is unfinished work. Report exactly what you did. "Close enough" is failure.
@@ -29,9 +29,9 @@ These override every default, skill, and "best practice".
 
 No production code without a failing test first. This is LAW: it binds every line of production code, new or existing, every time you touch it, fixes included. The one exception is a workflow, as Workflows below says.
 
-Load `mattpocock-skills:tdd` before writing code. Where it differs from this section, this section wins.
+Load `mattpocock-skills:tdd` before writing code.
 
-- **Seams.** Tests go through the seams the issue lists. They are agreed: use them, and no others, without asking. A seam includes the tools that observe it: the built Image is also inspected, run and exec'd into with `docker`.
+- **Seams.** Tests go through the seams the issue lists, or, without an issue, the seams the existing tests already drive. They are agreed: use them, and no others, without asking. A seam includes the tools that observe it: the built Image is also inspected, run and exec'd into with `docker`.
 - **Red first.** Think about, plan and write implementation only once its test has failed. One red is open at a time.
 - **Untestable choices.** Where no test can tell two ways apart, take the better one and say so.
 - **Workflows.** No seam can drive a GitHub Actions workflow, so a workflow, and whatever only it runs, is written without a test of its own. It is proven by its own run: on the pull request at Finishing step 9, or after the merge at step 11.
@@ -150,4 +150,4 @@ Default vocabulary: `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-
 
 ### Domain docs
 
-Single-context: one `CONTEXT.md` plus `docs/adr/` at the repository root. See `docs/agents/domain.md`. A glossary term goes into `CONTEXT.md` through `mattpocock-skills:domain-modeling`, which writes `CONTEXT.md` wherever it names `GLOSSARY.md`.
+Single-context: one `CONTEXT.md` plus `docs/adr/` at the repository root. See `docs/agents/domain.md`. A glossary term goes into `CONTEXT.md` through `mattpocock-skills:domain-modeling`. Wherever a skill names `GLOSSARY.md`, it means `CONTEXT.md`.
