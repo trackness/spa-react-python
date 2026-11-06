@@ -46,7 +46,7 @@ All other code is written through the Cycle, performed on a list of behaviours. 
 2. Write one failing test for it at an agreed seam. Go to 3.
 3. Run it:
    - If it passes, and also passes on `origin/main` (run it in a `git worktree` of `origin/main`, freshly fetched), it is a FAILURE: delete it. Go to 1.
-   - If it passes, it is a FAILURE: revert the over-implementation. Repeat 3.
+   - If it passes, it is a FAILURE: the branch already holds code no failing test demanded. Revert that code. Repeat 3.
    - If it fails for the wrong reason, fix that cause. Repeat 3.
    - Else, go to 4.
 4. Write the least code that passes, decided ONLY from that failure. Go to 5.
@@ -81,7 +81,7 @@ Review is a check, not a safety net: the work entering Finishing already meets e
 6. Run `ponytail:ponytail-audit` on the whole repository, briefed with the issue number (without an issue, the user's request) and nothing else. Then run `mattpocock-skills:domain-modeling` on the change, briefed as in 3. The glossary is `CONTEXT.md` (see `docs/agents/domain.md`): find the terms the change introduces, challenge each against it yourself, and record each conflict or missing term as a finding. In this step the skill writes no file. Collect, verify and triage their findings as in 4:
    - If anything is Fixable, go to 5.
    - Else, go to 7.
-7. You are here ONLY when one unbroken pass of 1, 3 and 6 found nothing Fixable. Bring the user every Covered, User's call and Wrong finding, item by item, each with its issue, its question or its evidence. Go to 8.
+7. You are here ONLY when one pass of 1, 3 and 6, with no fix at 5 in between, found nothing Fixable. Bring the user every Covered, User's call and Wrong finding, item by item, each with its issue, its question or its evidence. Go to 8.
 8. Push. If no pull request is open, open one as the git conventions say. Set its title to the Conventional Commit subject of the work, and its body to match the work, in `CONTEXT.md`'s terms (`gh pr edit` on an open one). Its footer is `Closes #<issue>`, unless an acceptance criterion is verified only by the merge: then `Refs #<issue>`. Go to 9.
 9. Watch CI with `gh run watch <run-id> --exit-status`, the run ID from `gh run list --commit <pushed-sha>`:
    - If it fails, fix the failure. Go to 1.
