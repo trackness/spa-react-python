@@ -6,6 +6,12 @@ The standards every change in this repository follows.
 
 Never hand-roll anything a strong implementation already does. Good dependencies are not to be avoided. Follow a framework's standard tooling and patterns unless there is a need to deviate.
 
+Before writing anything, read the dependencies' source (`backend/.venv`, `*/node_modules`, and each GitHub Action's `action.yml` and source at the version it pins, fetched with `gh api`) for a built-in or standard hook that already does it. Never contort a dependency into a place it does not belong.
+
+## Comments
+
+A comment says only why the code is as it is now: no tombstones, and no decision history.
+
 ## Toolchain
 
 - **ty** type checks Python.
