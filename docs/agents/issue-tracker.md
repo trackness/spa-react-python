@@ -4,13 +4,13 @@ Issues and specs for this repo live as GitHub issues. Use the `gh` CLI for all o
 
 ## Conventions
 
-- **Multi-line text**, for an issue, a comment or a pull request: write it with Write to a file outside the repository, pass it with `--body-file <file>`, then delete the file.
+- **Multi-line text** goes in with `--body-file <file>`, as AGENTS.md's Issue tracker section says.
 - **Create an issue**: `gh issue create --title "..." --body "..."`, or `--body-file <file>` for multi-line text.
 - **Read an issue**: `gh issue view <number> --comments`, filtering comments by `jq` and also fetching labels.
 - **List issues**: `gh issue list --state open --json number,title,body,labels,comments --jq '[.[] | {number, title, body, labels: [.labels[].name], comments: [.comments[].body]}]'` with appropriate `--label` and `--state` filters.
 - **Comment on an issue**: `gh issue comment <number> --body "..."`, or `--body-file <file>` for multi-line text.
 - **Apply / remove labels**: `gh issue edit <number> --add-label "..."` / `--remove-label "..."`
-- **Close**: `gh issue close <number> --comment "..."`. It has no `--body-file`, so a multi-line closing comment goes in first with `gh issue comment <number> --body-file <file>`, then `gh issue close <number>`.
+- **Close**: `gh issue close <number> --comment "..."`, or, for a multi-line closing comment, as AGENTS.md's Issue tracker section says.
 
 Infer the repo from `git remote -v`; `gh` does this automatically when run inside a clone.
 
